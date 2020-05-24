@@ -133,24 +133,15 @@ import {
   };
   
   export const logoutUser = () => {
-    localStorage.removeItem('authUser');
     delete axios.defaults.headers.common['Authorization'];
     firebase.auth().signOut()
     store.dispatch({ type: SET_SNACKBAR, payload: [{type: "info", message: "You Have Been Logged Out"}]})
   };
   
-  export function getUserData(token){
+  export function getUserData(token, userId){
     store.dispatch({ type: LOADING_USER });
     setAuthorizationHeader(token);
-    setRealTimeListeners()
-/*     verifyToken()
-    .then(() => {
-      store.dispatch({ type: LOADING_USER });
-      setRealTimeListeners()
-    })
-    .catch(err => {
-      logoutUser()
-    }) */
+    setRealTimeListeners(userId)
   };
     
   export const editUserDetails = (userDetails) => (dispatch) => {
@@ -213,6 +204,5 @@ import {
   
 const setAuthorizationHeader = (token) => {
   const FBIdToken = `Bearer ${token}`;
-  localStorage.setItem('FBIdToken', FBIdToken);
   axios.defaults.headers.common['Authorization'] = FBIdToken;
 };

@@ -7,7 +7,6 @@ import {
   SET_TRADES,
   LOADING_DATA,
   STOP_LOADING_DATA,
-  STOP_LOADING_UI,
   SET_WAIFU_LIST,
   UNSUB_SNAPSHOTS,
   SUB_SNAPSHOTS,
@@ -15,7 +14,6 @@ import {
 } from '../types';
   
   const initialState = {
-    loading: false,
     poll: {
       weekly: null,
       daily: null
@@ -33,12 +31,10 @@ import {
       case LOADING_DATA:
         return {
           ...state,
-          loading: true
         };
       case STOP_LOADING_DATA:
         return {
           ...state,
-          loading: false
         };
       case SET_WEEKLY_POLL:
         action.payload.activeTill = action.payload.activeTill.toDate();
@@ -67,14 +63,12 @@ import {
           ...state,
           weeklyPollWaifus: action.payload.weekly,
           dailyPollWaifus:action.payload.daily,
-          loading: false
         };
       case SET_SEARCH_DATA:
         state.searchItems = action.payload;
                 
         return {
           ...state,
-          loading: false
         };
         break;
       case SET_TRADES:
@@ -98,7 +92,8 @@ import {
           state.unSubOtherUsers()
           state.unSubWaifus()
           state.unSubPollWaifus()
-          state.unSubPoll()
+          state.unSubDailyPoll()
+          state.unSubWeeklyPoll()
           state.unSubTrades()
           state.unSubGauntlet()
         }
@@ -113,7 +108,8 @@ import {
           state.unSubOtherUsers()
           state.unSubWaifus()
           state.unSubPollWaifus()
-          state.unSubPoll()
+          state.unSubDailyPoll()
+          state.unSubWeeklyPoll()
           state.unSubTrades()
           state.unSubGauntlet()
         }

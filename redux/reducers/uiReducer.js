@@ -6,7 +6,7 @@ import {
 } from '../types';
   
   const initialState = {
-    loading: false,
+    loading: true,
     snackBar: null,
   };
   
@@ -37,8 +37,10 @@ import {
           snackBar: null,
         };
       default:
-        state.snackBar = null;
-        return {...state};
+        return {
+          ...state,
+          snackBar: null
+        };
     }
   }
   
