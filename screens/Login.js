@@ -13,6 +13,7 @@ import { Text, TextInput, Button, ActivityIndicator } from 'react-native-paper';
 // Redux stuff
 import watch from 'redux-watch'
 import store from '../redux/store';
+import { LOADING_UI, STOP_LOADING_UI } from '../redux/types';
 
 const { width, height } = Dimensions.get('window');
 export class Login extends Component {
@@ -25,8 +26,7 @@ export class Login extends Component {
 		};
 		
 		let uiReducerWatch = watch(store.getState, 'UI')
-		store.subscribe(uiReducerWatch((newVal, oldVal, objectPath) => {
-			console.log(newVal.loading)
+		this.uiUnsubscribe = store.subscribe(uiReducerWatch((newVal, oldVal, objectPath) => {
 			this.setState({loading: newVal.loading })
 		}))
 	}
@@ -39,6 +39,8 @@ export class Login extends Component {
 	}
 
 	userNameLoginSubmit = (event) => {
+		store.dispatch({type: LOADING_UI})
+
 		event.preventDefault();
 		const userData = {
 			email: this.state.email,
@@ -55,14 +57,15 @@ export class Login extends Component {
 			return;
 		}
 	
-		firebase.firestore().collection("users").where("email", "==", userData.email).get()
-		.then((data) => {
-			if(data.empty){
-				throw new Error("No Account Exists")
-			}
+		// firebase.firestore().collection("users").where("email", "==", userData.email).get()
+		// .then((data) => {
+		// 	if(data.empty){
+		// 		throw new Error("No Account Exists")
+		// 	}
 	
-			return firebase.auth().signInWithEmailAndPassword(userData.email, userData.password)
-		})
+		// 	return firebase.auth().signInWithEmailAndPassword(userData.email, userData.password)
+		// })
+		firebase.auth().signInWithEmailAndPassword(userData.email, userData.password)
 		.then(async (data) => {
 			var uid = await firebase.auth().currentUser.uid;
 			var userRec = await firebase.firestore().doc(`/users/${uid}`).get();
@@ -72,6 +75,7 @@ export class Login extends Component {
 			}
 		})
 		.catch((err) => {
+			store.dispatch({type: STOP_LOADING_UI})
 			console.log(err.code);
 			var errors = [];
 	
@@ -87,30 +91,31 @@ export class Login extends Component {
 		})
 	}
 
+	async componentDidMount(){
+	}
+	componentWillMount(){
+		this.uiUnsubscribe()
+	}
+
 	render() {
 		return (
 			<View style={styles.container}>
 				<TextInput
-					id="email"
-					name="email"
-					type="email"
 					label="Email"
 					underlineColor= "teal"
 					style={styles.textField}
 					value={this.state.email}
+					mode="Outlined"
 					onChangeText={this.emailChange}
-					fullWidth
 				/>
 				<TextInput
-					id="password"
-					name="password"
-					type="password"
 					label="Password"
 					underlineColor= "teal"
+					secureTextEntry={true}
+					mode="Outlined"
 					style={styles.textField}
 					value={this.state.password}
 					onChangeText={this.passwordChange}
-					fullWidth
 				/>
 				
 				<View>

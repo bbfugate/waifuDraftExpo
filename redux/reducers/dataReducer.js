@@ -1,3 +1,5 @@
+
+import firebase from 'firebase/app'
 import {
   SET_WEEKLY_POLL,
   SET_DAILY_POLL,
@@ -14,6 +16,7 @@ import {
 } from '../types';
   
   const initialState = {
+    loading: false,
     poll: {
       weekly: null,
       daily: null
@@ -25,16 +28,18 @@ import {
     bosses: [],
     searchItems: {}
   };
-  
+ 
   export default function(state = initialState, action) {
     switch (action.type) {
       case LOADING_DATA:
         return {
           ...state,
+          loading: true
         };
       case STOP_LOADING_DATA:
         return {
           ...state,
+          loading: false
         };
       case SET_WEEKLY_POLL:
         action.payload.activeTill = action.payload.activeTill.toDate();
@@ -69,6 +74,7 @@ import {
                 
         return {
           ...state,
+          loading: false
         };
         break;
       case SET_TRADES:
@@ -92,10 +98,10 @@ import {
           state.unSubOtherUsers()
           state.unSubWaifus()
           state.unSubPollWaifus()
-          state.unSubDailyPoll()
           state.unSubWeeklyPoll()
-          state.unSubTrades()
-          state.unSubGauntlet()
+          state.unSubDailyPoll()
+          // state.unSubTrades()
+          // state.unSubGauntlet()
         }
 
         return{
@@ -108,17 +114,17 @@ import {
           state.unSubOtherUsers()
           state.unSubWaifus()
           state.unSubPollWaifus()
-          state.unSubDailyPoll()
           state.unSubWeeklyPoll()
-          state.unSubTrades()
-          state.unSubGauntlet()
+          state.unSubDailyPoll()
+          // state.unSubTrades()
+          // state.unSubGauntlet()
         }
 
         return{
           ...state,
         }
       default:
-        return state;
+        return {...state};
     }
   }
   

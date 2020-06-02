@@ -9,6 +9,8 @@ import {
   import jwtDecode from 'jwt-decode';
   
   const initialState = {
+    credentials: {},
+    waifus: [],
     otherUsers: [],
     authenticated: false,
     loading: false
@@ -34,7 +36,6 @@ import {
         return {
           ...state,
           authenticated: true,
-          loading: false,
           ...action.payload,
         };
       case SET_OTHER_USERS:

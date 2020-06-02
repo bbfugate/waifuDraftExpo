@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "waifudraftapp",
-    "slug": "waifudraftapp",
+    "name": "WaifuDraft",
+    "slug": "WaifuDraft",
     "platforms": [
       "ios",
       "android",
@@ -9,7 +9,7 @@
     ],
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/AppIcon.png",
     "scheme": "myapp",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -23,10 +23,17 @@
       "**/*"
     ],
     "ios": {
+      "bundleIdentifier": "com.waifu.draft",
+      "buildNumber": "0.0.1",
       "supportsTablet": true
     },
+    "android": {
+      "package": "com.waifu.draft",
+      "versionCode": 1
+    }, 
     "web": {
       "favicon": "./assets/images/favicon.png"
     }
   }
+
 }

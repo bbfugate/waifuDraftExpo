@@ -50,9 +50,6 @@ import {
         return data.user.getIdToken();
       }
     })
-/*     .then((token) => {
-      getUserData(token);
-    }) */
     .catch((err) => {
       console.log(err.code);
       var errors = [];
@@ -135,21 +132,15 @@ import {
   export const logoutUser = () => {
     delete axios.defaults.headers.common['Authorization'];
     firebase.auth().signOut()
-    store.dispatch({ type: SET_SNACKBAR, payload: [{type: "info", message: "You Have Been Logged Out"}]})
+    //store.dispatch({ type: SET_SNACKBAR, payload: [{type: "info", message: "You Have Been Logged Out"}]})
   };
-  
-  export function getUserData(token, userId){
-    store.dispatch({ type: LOADING_USER });
-    setAuthorizationHeader(token);
-    setRealTimeListeners(userId)
-  };
-    
+      
   export const editUserDetails = (userDetails) => (dispatch) => {
     store.dispatch({ type: LOADING_USER });
     axios
       .post('/user', userDetails)
       .then(() => {
-        store.dispatch(getUserData());
+        console.log("edit user details")
       })
       .catch((err) => console.log(err));
   };
@@ -202,7 +193,8 @@ import {
   };
 
   
-const setAuthorizationHeader = (token) => {
+export async function setAuthorizationHeader(){
+  var token = await firebase.auth().currentUser.getIdToken()
   const FBIdToken = `Bearer ${token}`;
   axios.defaults.headers.common['Authorization'] = FBIdToken;
 };

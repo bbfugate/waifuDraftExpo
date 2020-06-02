@@ -29,7 +29,7 @@ export class Signup extends Component {
 		};
 		
 		let uiReducerWatch = watch(store.getState, 'UI')
-		store.subscribe(uiReducerWatch((newVal, oldVal, objectPath) => {
+		this.uiUnsubscribe = store.subscribe(uiReducerWatch((newVal, oldVal, objectPath) => {
 			this.setState({loading: newVal.loading })
 		}))
 	}
@@ -155,6 +155,10 @@ export class Signup extends Component {
 		});
 	}
 	
+	componentWillMount(){
+		this.uiUnsubscribe()
+	}
+	
 	render() {
 		return (
 			<View style={styles.container}>
@@ -186,7 +190,7 @@ export class Signup extends Component {
 					underlineColor= "teal"
 					style={styles.textField}
 					value={this.state.confirmPassword}
-					onChange={this.confirmPasswordChange}
+					onChangeText={this.confirmPasswordChange}
 					fullWidth
 				/>
 				<TextInput
@@ -197,8 +201,7 @@ export class Signup extends Component {
 					underlineColor= "teal"
 					style={styles.textField}
 					value={this.state.userName}
-					onChange={this.userNameChange}
-					fullWidth
+					onChangeText={this.userNameChange}
 				/>
 				<TextInput
 					id="pin"
@@ -208,8 +211,7 @@ export class Signup extends Component {
 					underlineColor= "teal"
 					style={styles.textField}
 					value={this.state.pin}
-					onChange={this.pinChange}
-					fullWidth
+					onChangeText={this.pinChange}
 				/>
 				
 				<View>
