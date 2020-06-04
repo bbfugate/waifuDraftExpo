@@ -66,24 +66,7 @@ export default class Trade extends Component {
   }
 
   selectOtherUser(user){
-    var origChars = _.cloneDeep(this.state.origSearchItems.characters[view].items)
-
-    switch(view){
-      case 'Anime-Manga':
-        var amNames = item.items.map(x => x.name.toLowerCase())
-        var charData = _.filter(origChars, function (item) {
-          if (item.animes.some(ele => amNames.includes(ele.toLowerCase())) ||
-            item.mangas.some(ele => amNames.includes(ele.toLowerCase())))
-            return true;
-        })
-        this.state.navigation.navigate("SearchSeries", { series: item.items, chars: charData})
-        break;
-      case 'Marvel':
-      case 'DC':
-        var charData = origChars.filter(x => x.teams.map(y => y.toLowerCase()).includes(item.name.toLowerCase()))        
-        this.state.navigation.navigate("SearchCharacters", { chars: charData, type: view})
-        break;
-    }
+    this.state.navigation.navigate("OtherUserProfile", {otherUser: user})
   }
 
   render() {
@@ -100,7 +83,7 @@ export default class Trade extends Component {
               spacing={20}
               renderItem={({item, index}) => {
                 return(
-                  <TouchableOpacity activeOpacity={.25} onPress={() => console.log("press")} style={styles.itemContainer}>
+                  <TouchableOpacity activeOpacity={.25} onPress={() => this.selectOtherUser(item)} style={styles.itemContainer}>
                     <Image
                       style={{
                         flex: 1,

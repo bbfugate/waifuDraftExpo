@@ -6,8 +6,6 @@ import { FlatGrid } from 'react-native-super-grid';
 import _ from 'lodash'
 import Swiper from 'react-native-swiper'
 
-import UserProfileImg from '../components/UserProfileImg'
-
 //Media
 import defIcon from '../assets/images/defIcon.png'
 import atkIcon from '../assets/images/atkIcon.png'
@@ -15,38 +13,54 @@ import atkIcon from '../assets/images/atkIcon.png'
 //Redux
 import store from '../redux/store';
 import watch from 'redux-watch'
+import { useSelector } from 'react-redux';
 import { logoutUser } from '../redux/actions/userActions'
 
 //Component
+import Countdown from '../components/CountDown'
 import RankBackground from '../components/RankBackGround'
+
+//Firebase
+import firebase from 'firebase/app'
+import 'firebase/auth'
 
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
 
-export default class Profile extends Component {
+function Row({ item, index }) {
+  return(
+    <View style={{flex: 1, height: 200, justifyContent:"center", alignItems:"center"}}>
+      <ImageBackground resizeMode={"cover"} style={{flex:1}} source={{uri: item.img}}>
+        <Text style={[styles.text, {fontSize: 15}]}>{item.name}</Text>
+      </ImageBackground>
+    </View>
+  )
+}
+
+export default class OtherUserProfile extends Component {
   constructor(props) {
     super();
-
     this.mounted = true;
+
     var trades = _.cloneDeep(store.getState().data.trades);
-    trades = trades.filter(x => x.from.husbandoId == store.getState().user.credentials.userId ||
-      x.to.husbandoId == store.getState().user.credentials.userId)
+    trades = trades.filter(x => x.from.husbandoId == props.route.params.otherUser.userId || x.to.husbandoId == props.route.params.otherUser.userId)
       
     this.state = {
       navigation: props.navigation,
+      otherUser: props.route.params.otherUser,
 			loading: store.getState().data.loading,
-      userInfo: store.getState().user.credentials,
-      waifus: store.getState().user.waifus,
+      userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
       users: [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers),
       trades: trades,
       size: {width,height}
     };
 
-    this.selectWaifu = this.selectWaifu.bind(this)
-    this.selectTrade = this.selectTrade.bind(this)
-
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
+
+    this.startTrade = this.startTrade.bind(this)
+    this.selectTrade = this.selectTrade.bind(this)
+    this.selectWaifu = this.selectWaifu.bind(this)
   }
   
   setSubscribes(){
@@ -55,39 +69,27 @@ export default class Profile extends Component {
 
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
       var trades = _.cloneDeep(newVal.trades);
-      trades = trades.filter(x => x.from.husbandoId == this.state.userInfo.userId || x.to.husbandoId == this.state.userInfo.userId)
+      trades = trades.filter(x => x.from.husbandoId == this.state.otherUser.userId || x.to.husbandoId == this.state.otherUser.userId)
 
-      var userInfo = this.state.userInfo;
-      userInfo.waifus = newVal.waifuList.filter(x => x.husbandoId == this.state.userInfo.userId);
-
-      var selectedWaifu = null;
-      if(this.state.selectedWaifu != null){
-        selectedWaifu = newVal.waifuList.filter(x => x.waifuId == this.state.selectedWaifu.waifuId)[0]
-      }
-
-			this.setState({ userInfo, selectedWaifu, trades})
+			this.setState({ trades })
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      var selectedWaifu = null;
+      var otherUser = newVal.otherUsers.filter(x => x.userId == this.state.otherUser.userId)[0];
       var users = [{...newVal.credentials, waifus: newVal.waifus }].concat(newVal.otherUsers);
-      if(this.state.selectedWaifu != null){
-        selectedWaifu = newVal.waifus.filter(x => x.waifuId == this.state.selectedWaifu.waifuId)[0]
-      }
 
-      this.setState({userInfo: newVal.credentials, waifus: newVal.waifus, selectedWaifu, users })
-      // this.setState({userInfo: {...newVal.credentials, waifus: newVal.waifus }, selectedWaifu, users: newVal.otherUsers })
+      this.setState({otherUser, userInfo: {...newVal.credentials, waifus: newVal.waifus}, users })
     }))
     
     var trades = _.cloneDeep(store.getState().data.trades);
-    trades = trades.filter(x => x.from.husbandoId == this.state.userInfo.userId || x.to.husbandoId == this.state.userInfo.userId)
+    trades = trades.filter(x => x.from.husbandoId == this.state.otherUser.userId || x.to.husbandoId == this.state.otherUser.userId)
     var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
 
     this.setState({
-      users,
+      userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
+      otherUser: store.getState().user.otherUsers.filter(x => x.userId == this.state.otherUser.userId)[0],
       trades,
-      userInfo: store.getState().user.credentials,
-      waifus: store.getState().user.waifus
+      users
     })
   }
 
@@ -110,12 +112,16 @@ export default class Profile extends Component {
     this.mounted = false;
   }
   
+  startTrade(){
+    this.state.navigation.navigate("NewTrade",  {otherUser: this.state.otherUser})
+  }
+
   selectTrade(trade){
     this.state.navigation.navigate("ViewTrade", {trade})
   }
-
+  
   selectWaifu(waifu){
-    this.state.navigation.navigate("CharDetails", {waifu})
+    this.state.navigation.navigate("OtherUserCharDetails", {waifu})
   }
 
   render(){
@@ -127,32 +133,34 @@ export default class Profile extends Component {
           <Swiper
             index={0}
             showsPagination={false}
+            style={{backgroundColor: "white"}}
           >
             <View style={[styles.container]}>
-              <UserProfileImg user={this.state.userInfo} img={this.state.userInfo.img}/>
+              <View style={[styles.profileImg]} >
+                <Image source={{uri: this.state.otherUser.img}} style={[styles.profileImg]} />
+              </View>
 
               <View style={[styles.userInfoView]}>
                 <View style={[styles.userInfo]}>
-                  <Text style={[styles.text]}>{this.state.userInfo.userName}</Text>
-                  <Text style={[styles.text]}>{this.state.userInfo.email}</Text>
+                  <Text style={[styles.text]}>{this.state.otherUser.userName}</Text>
                 </View>
                 
                 <View style={[styles.userStatsView]}>
-                  <Text style={[styles.text]}>Points - {this.state.userInfo.points}</Text>
-                  <Text style={[styles.text]}>Rank Coins - {this.state.userInfo.rankCoins}</Text>
-                  <Text style={[styles.text]}>Stat Coins - {this.state.userInfo.statCoins}</Text>
-                  <Text style={[styles.text]}>Submit Slots - {this.state.userInfo.submitSlots}</Text>
+                  <Text style={[styles.text]}>Points - {this.state.otherUser.points}</Text>
+                  <Text style={[styles.text]}>Rank Coins - {this.state.otherUser.rankCoins}</Text>
+                  <Text style={[styles.text]}>Stat Coins - {this.state.otherUser.statCoins}</Text>
+                  <Text style={[styles.text]}>Submit Slots - {this.state.otherUser.submitSlots}</Text>
                 </View>
               </View>
             
-              <View style={{height: 50, width: width}}>
+              <View style={{height: 50, width: width * .8}}>
                 <Button
                   mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                  onPress={logoutUser}
-                >LogOut</Button>
+                  onPress={this.startTrade}
+                >Start Trade</Button>
               </View>
             </View>
-
+          
             <View style={styles.waifuListView}>
               <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
                 <Text style={styles.text}>TRADES</Text>
@@ -207,7 +215,7 @@ export default class Profile extends Component {
               </View>
               <FlatGrid
                 itemDimension={150}
-                items={this.state.waifus}
+                items={this.state.otherUser.waifus}
                 style={styles.gridView}
                 // staticDimension={300}
                 // fixed
@@ -266,7 +274,7 @@ export default class Profile extends Component {
   }
 }
 
-Profile.navigationOptions = {
+OtherUserProfile.navigationOptions = {
   header: null,
 };
 
@@ -356,7 +364,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 1,
-    elevation: 10
+    elevation: 5
   },
   statView:{
     flex:1, flexDirection: "row",

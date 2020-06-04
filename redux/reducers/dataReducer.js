@@ -100,7 +100,7 @@ import {
           state.unSubPollWaifus()
           state.unSubWeeklyPoll()
           state.unSubDailyPoll()
-          // state.unSubTrades()
+          state.unSubTrades()
           // state.unSubGauntlet()
         }
 
@@ -116,7 +116,7 @@ import {
           state.unSubPollWaifus()
           state.unSubWeeklyPoll()
           state.unSubDailyPoll()
-          // state.unSubTrades()
+          state.unSubTrades()
           // state.unSubGauntlet()
         }
 

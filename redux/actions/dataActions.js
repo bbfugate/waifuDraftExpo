@@ -183,19 +183,23 @@ export async function buyWaifu(waifu){
   store.dispatch({ type: STOP_LOADING_UI });
 }
 
-export function submitTrade(trade){
-  var weeklyPoll = store.getState().data.poll.weekly;
-  if(weeklyPoll.isActive){
-    store.dispatch({
-      type: SET_SNACKBAR,
-      payload: [{ type: "error", message: "Cannot Submit Trade During Active Poll" }]
-    });
-    return
-  }
+export async function submitTrade(trade){
+  store.dispatch({ type: LOADING_UI });
+
+  // var weeklyPoll = store.getState().data.poll.weekly;
+  // if(weeklyPoll.isActive){
+  //   store.dispatch({
+  //     type: SET_SNACKBAR,
+  //     payload: [{ type: "error", message: "Cannot Submit Trade During Active Poll" }]
+  //   });
+    
+  //   store.dispatch({ type: STOP_LOADING_UI });
+  //   return
+  // }
 
   trade.status = "Active";
 
-  firebase.firestore().collection("trades").add({...trade})
+  await firebase.firestore().collection("trades").add({...trade})
   .then(() => {
     store.dispatch({
       type: SET_SNACKBAR,
@@ -208,6 +212,8 @@ export function submitTrade(trade){
       payload: [{ type: "error", message: "Error Submitting Trade" }]
     });
   });
+  
+  store.dispatch({ type: STOP_LOADING_UI });
 }
 
 export function updateTrade(trade, status){
@@ -333,7 +339,7 @@ export async function setRealTimeListeners(userId){
       .then((data) => {
         var arr = [];
         data.forEach((doc) => {
-          arr.push({...doc.data(), id: doc.id});
+          arr.push({...doc.data(), waifuId: doc.id});
         });
         
         return arr
@@ -366,42 +372,42 @@ export async function setRealTimeListeners(userId){
     });
   });
   
-  // var unSubTrades = firebase.firestore().collection('trades').onSnapshot(async function(data) {
-  //   var trades = [];
+  var unSubTrades = firebase.firestore().collection('trades').onSnapshot(async function(data) {
+    var trades = [];
 
-  //   var waifus = store.getState().data.waifuList;
-  //   if(waifus.length == 0){
-  //     waifus = await firebase.firestore().collection('waifus').get()
-  //     .then((data) => {
-  //       var arr = [];
-  //       data.forEach((doc) => {
-  //         arr.push({...doc.data(), id: doc.id});
-  //       });
+    var waifus = store.getState().data.waifuList;
+    if(waifus.length == 0){
+      waifus = await firebase.firestore().collection('waifus').get()
+      .then((data) => {
+        var arr = [];
+        data.forEach((doc) => {
+          arr.push({...doc.data(), id: doc.id});
+        });
         
-  //       return arr
-  //     })
-  //     .catch(err => {
-  //       console.log(err)
-  //     });
-  //   }
+        return arr
+      })
+      .catch(err => {
+        console.log(err)
+      });
+    }
 
-  //   data.forEach(x => {
-  //     var trade = x.data();
-  //     trade.id = x.id;
-  //     var fromWaifus = waifus.filter(y => trade.from.waifus.includes(y.link))
-  //     var toWaifus = waifus.filter(y => trade.to.waifus.includes(y.link))
+    data.forEach(x => {
+      var trade = x.data();
+      trade.id = x.id;
+      var fromWaifus = waifus.filter(y => trade.from.waifus.includes(y.link))
+      var toWaifus = waifus.filter(y => trade.to.waifus.includes(y.link))
 
-  //     trade.from.waifus = fromWaifus;
-  //     trade.to.waifus = toWaifus;
+      trade.from.waifus = fromWaifus;
+      trade.to.waifus = toWaifus;
 
-  //     trades.push(trade)
-  //   })
+      trades.push(trade)
+    })
 
-  //   store.dispatch({
-  //     type: SET_TRADES,
-  //     payload: trades
-  //   });
-  // });    
+    store.dispatch({
+      type: SET_TRADES,
+      payload: trades
+    });
+  });
   
   var unSubWaifus = firebase.firestore().collection("waifus").onSnapshot(function(querySnapshot) {
     var waifus = [];
@@ -506,7 +512,7 @@ export async function setRealTimeListeners(userId){
   //   store.dispatch({ type: STOP_LOADING_UI });
   //   store.dispatch({ type: STOP_LOADING_DATA });
   // });
-  store.dispatch({ type: SUB_SNAPSHOTS, payload: {unSubUser, unSubWaifus, unSubOtherUsers, unSubPollWaifus, unSubDailyPoll, unSubWeeklyPoll } })
+  store.dispatch({ type: SUB_SNAPSHOTS, payload: {unSubUser, unSubWaifus, unSubOtherUsers, unSubTrades, unSubPollWaifus, unSubDailyPoll, unSubWeeklyPoll } })
   // store.dispatch({ type: SUB_SNAPSHOTS, payload: {unSubUser, unSubOtherUsers, unSubWaifus, unSubPollWaifus, unSubDailyPoll, unSubWeeklyPoll, unSubTrades, unSubGauntlet} })
 }
 

@@ -15,7 +15,13 @@ import HomeScreen from '../screens/Home';
 import VoteDetailsScreen from '../screens/VoteDetails';
 import CharDetailsScreen from '../screens/CharDetails';
 import ProfileScreen from '../screens/Profile';
+
 import TradeScreen from '../screens/Trade';
+import OtherUserProfileScreen from '../screens/OtherUserProfile';
+import OtherUserCharDetailsScreen from '../screens/OtherUserCharDetails';
+import NewTradeScreen from '../screens/NewTrade';
+import ViewTradeScreen from '../screens/ViewTrade';
+
 import SearchScreen from '../screens/Search';
 import SearchSeriesScreen from '../screens/SearchSeries';
 import SearchCharactersScreen from '../screens/SearchCharacters';
@@ -74,6 +80,7 @@ function ProfileStackScreen() {
     >
       <ProfileStack.Screen name="Profile" component={ProfileScreen} />
       <ProfileStack.Screen name="CharDetails" component={CharDetailsScreen} />
+      <ProfileStack.Screen name="ViewTrade" component={ViewTradeScreen} />
     </ProfileStack.Navigator>
   );
 }
@@ -81,15 +88,18 @@ function ProfileStackScreen() {
 const TradeStack = createStackNavigator();
 function TradeStackScreen() {
   return (
-    <ProfileStack.Navigator
+    <TradeStack.Navigator
       screenOptions={{
         headerShown: false,
         cardStyle: {backgroundColor: "transparent"}
       }}
     >
-      <ProfileStack.Screen name="Trade" component={TradeScreen} />
-      <ProfileStack.Screen name="CharDetails" component={CharDetailsScreen} />
-    </ProfileStack.Navigator>
+      <TradeStack.Screen name="Trade" component={TradeScreen} />
+      <TradeStack.Screen name="OtherUserProfile" component={OtherUserProfileScreen} />
+      <TradeStack.Screen name="OtherUserCharDetails" component={OtherUserCharDetailsScreen} />
+      <TradeStack.Screen name="NewTrade" component={NewTradeScreen} />
+      <TradeStack.Screen name="ViewTrade" component={ViewTradeScreen} />
+    </TradeStack.Navigator>
   );
 }
 

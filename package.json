@@ -79,7 +79,8 @@
     "redux-thunk": "^2.3.0",
     "redux-watch": "^1.1.1",
     "styled-components": "^5.0.1",
-    "@react-native-community/viewpager": "3.3.0"
+    "@react-native-community/viewpager": "3.3.0",
+    "expo-image-picker": "~8.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.8.6",
