@@ -144,7 +144,7 @@ export default class Profile extends Component {
                   <Text style={[styles.text]}>Submit Slots - {this.state.userInfo.submitSlots}</Text>
                 </View>
               </View>
-            
+
               <View style={{height: 50, width: width}}>
                 <Button
                   mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}

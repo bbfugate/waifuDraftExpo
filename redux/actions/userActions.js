@@ -26,7 +26,8 @@ import {
       console.log(errors)
       store.dispatch({
         type: SET_SNACKBAR,
-        payload: errors
+        // payload: errors
+        payload: {type: "error", message: errors[0]}
       });
       return;
     }
@@ -61,7 +62,8 @@ import {
 
       store.dispatch({
         type: SET_SNACKBAR,
-        payload: errors
+        payload: {type: "error", message: errors[0]}
+        // payload: errors
       });
     })
   };
@@ -76,7 +78,7 @@ import {
 
       store.dispatch({
         type: SET_SNACKBAR,
-        payload: errorList
+        payload: errorList[0]
       });
       return;
     }
@@ -109,7 +111,7 @@ import {
     .then(() => {
       store.dispatch({
         type: SET_SNACKBAR,
-        payload: [{ type: "success", message:'Your Account Has Been Created But Must Be Approved!' }]
+        payload: { type: "success", message:'Your Account Has Been Created But Must Be Approved!' }
       });
     })
     .catch(err => {
@@ -117,22 +119,23 @@ import {
       if (err.code === 'auth/email-already-in-use') {
         store.dispatch({
           type: SET_SNACKBAR,
-          payload: [{ type: "error", message:'Email is already in use' }]
+          payload: { type: "error", message:'Email is already in use' }
         });
       }
       else {
         store.dispatch({
           type: SET_SNACKBAR,
-          payload: [{ type: "error", message: err.code }]
+          payload: { type: "error", message: err.code }
         });
       }
     });
   };
   
-  export const logoutUser = () => {
+  export const logoutUser = async () => {
+    store.dispatch({ type: LOADING_UI })
     delete axios.defaults.headers.common['Authorization'];
-    firebase.auth().signOut()
-    //store.dispatch({ type: SET_SNACKBAR, payload: [{type: "info", message: "You Have Been Logged Out"}]})
+    await firebase.auth().signOut()
+    store.dispatch({ type: SET_SNACKBAR, payload: {type: "info", message: "You Have Been Logged Out"}})
   };
       
   export const editUserDetails = (userDetails) => (dispatch) => {

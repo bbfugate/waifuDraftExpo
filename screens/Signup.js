@@ -91,7 +91,7 @@ export class Signup extends Component {
 	
 			store.dispatch({
 				type: SET_SNACKBAR,
-				payload: errorList
+				payload: errorList[0]
 			});
 			return;
 		}
@@ -125,7 +125,7 @@ export class Signup extends Component {
 		.then(() => {
 			store.dispatch({
 				type: SET_SNACKBAR,
-				payload: [{ type: "success", message:'Your Account Has Been Created' }]
+				payload: { type: "success", message:'Your Account Has Been Created' }
 			});
 			this.setState({
 				loading: store.getState().UI.loading,
@@ -143,13 +143,13 @@ export class Signup extends Component {
 			if (err.code === 'auth/email-already-in-use') {
 				store.dispatch({
 					type: SET_SNACKBAR,
-					payload: [{ type: "error", message:'Email is already in use' }]
+					payload: { type: "error", message:'Email is already in use' }
 				});
 			}
 			else {
 				store.dispatch({
 					type: SET_SNACKBAR,
-					payload: [{ type: "error", message: err.code }]
+					payload: { type: "error", message: err.code }
 				});
 			}
 		});

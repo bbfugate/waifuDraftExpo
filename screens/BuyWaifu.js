@@ -5,37 +5,31 @@ import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, TouchableHighl
 import * as WebBrowser from 'expo-web-browser';
 
 import _ from 'lodash'
-const chroma = require('chroma-js')
-
 import Swiper from 'react-native-swiper'
+
 import AMCharDetails from '../components/AMCharDetails'
 import ComicCharDetails from '../components/ComicCharDetails'
-import {useRankCoin, useStatCoin, updateWaifuImg} from '../redux/actions/dataActions'
+import { buyWaifu } from '../redux/actions/dataActions'
 
 import store from '../redux/store'
 import watch from 'redux-watch'
 
+const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
 
-export default class CharDetails extends Component {
+export default class BuyWaifu extends Component {
   constructor(props){
     super();
     this.state ={
       navigation: props.navigation,
-      poll: store.getState().data.poll.weekly,
       userInfo: store.getState().user.credentials,
       waifu: props.route.params.waifu,
-      newImage: null,
-      showRankCoinConf: false,
-      showUpdateImg: false,
+      showBuyConf: false,
     };
     
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
-    this.useRankCoinFunc = this.useRankCoinFunc.bind(this)
-    this.useStatCoinFunc = this.useStatCoinFunc.bind(this)
-    this.updateImg = this.updateImg.bind(this)
-    this.updateImgText = this.updateImgText.bind(this)
+    this.buyWaifu = this.buyWaifu.bind(this)
   }
 
   setSubscribes(){
@@ -44,17 +38,16 @@ export default class CharDetails extends Component {
 
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
       var newWaifu = newVal.waifuList.filter(x => x.waifuId == this.state.waifu.waifuId)[0]
-      this.setState({waifu:newWaifu, poll:newVal.poll.weekly})
+      this.setState({ waifu: newWaifu })
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({userInfo: newVal.credentials})
+      this.setState({ userInfo: newVal.credentials })
     }))
     
     this.setState({
       userInfo: store.getState().user.credentials,
-      poll: store.getState().data.poll.weekly,
-      waifu: store.getState().user.waifus.filter(x => x.waifuId == this.state.waifu.waifuId)[0]
+      waifu: store.getState().data.waifuList.filter(x => x.waifuId == this.state.waifu.waifuId)[0]
     })
   }
 
@@ -80,28 +73,9 @@ export default class CharDetails extends Component {
     WebBrowser.openBrowserAsync(this.state.waifu.link);
   };
 
-  useRankCoinFunc(){
-    useRankCoin(this.state.waifu)
-    this.setState({ showRankCoinConf: false})
-  }
-
-  useStatCoinFunc(){
-    console.log("use stat coin")
-    // useRankCoin(this.state.waifu)
-    // this.setState({ showRankCoinConf: false})
-  }
-
-  updateImgText(text){
-    if((text.match(/\.(jpeg|jpg|gif|png)$/) != null))
-      this.setState({newImage: text})
-  }
-
-  async updateImg(){
-    var success = await updateWaifuImg(this.state.waifu, this.state.newImage);
-    
-    if(success){
-      this.setState({ newVal: null, showUpdateImg: false})
-    }
+  buyWaifu(){
+    buyWaifu(this.state.waifu)
+    this.setState({showBuyConf: false})
   }
 
   render(){
@@ -127,17 +101,13 @@ export default class CharDetails extends Component {
                   </View>
                   <View style={styles.buttonRowView}>
                     <View style={styles.buttonItem}>
-                      <Button onPress={() => this.setState({showRankCoinConf: true})}
-                        disabled={this.state.userInfo.rankCoins <= 0 || this.state.waifu.rank >= 4}
+                      <Button onPress={() => this.setState({showBuyConf: true})}
+                        disabled={this.state.waifu.rank * 5 > this.state.userInfo.points || this.state.waifu.husbando != "Shop"}
                         mode={"contained"} color={chroma('aqua').hex()} 
                         labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                       >
-                        Use Rank Coin
+                        Buy Waifu - {this.state.waifu.rank * 5}
                       </Button>
-                    </View>
-
-                    <View style={styles.buttonItem}>
-                      <Button disabled={true} mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}>Use Stat Coin</Button>
                     </View>
                   </View>
                 </View>
@@ -154,37 +124,28 @@ export default class CharDetails extends Component {
         <FAB
           //small
           color="white"
-          style={styles.imgUpdtFab}
-          icon="image"
-          onPress={() => this.setState({showUpdateImg: true})}
-        />
-
-        <FAB
-          //small
-          color="white"
           style={styles.fab}
           icon="link-variant"
           onPress={this.waifuLinkPress}
         />
 
-        {/* Rank Modal */}
         <Modal
           animationType="slide"
           transparent={true}
-          visible={this.state.showRankCoinConf}
-          onRequestClose={() => this.setState({showRankCoinConf: false})}
+          visible={this.state.showBuyConf}
+          onRequestClose={() => this.setState({showBuyConf: false})}
         >
           <View style={{flex:1, width:width, marginTop: 22, justifyContent:"center", alignItems:"center"}}>
             <View style={{height: 150, width: width, backgroundColor: chroma("white"),
               borderRadius: 25}}>
               
               <View style={{flex:1}}>
-                <Text style={styles.text}>You Are About To Use A Rank Coin. Proceed?</Text>
+                <Text style={styles.text}>You Are About To Buy This Waifu. Proceed?</Text>
               </View>
 
               <View style={styles.buttonRowView}>
                 <View style={styles.buttonItem}>
-                  <Button onPress={this.useRankCoinFunc}
+                  <Button onPress={this.buyWaifu}
                     mode={"contained"} color={chroma('aqua').hex()} 
                     labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                   >
@@ -194,7 +155,7 @@ export default class CharDetails extends Component {
 
                 <View style={styles.buttonItem}>
                   <Button mode={"contained"}
-                    onPress={() => this.setState({showRankCoinConf: false})}
+                    onPress={() => this.setState({showBuyConf: false})}
                     color={chroma('aqua').hex()}
                     labelStyle={{fontSize: 20, fontFamily: "Edo"}}>
                       Cancel
@@ -204,59 +165,12 @@ export default class CharDetails extends Component {
             </View>
           </View>
         </Modal>
-      
-        {/* Update Image Modal */}
-        <Modal
-          animationType="slide"
-          visible={this.state.showUpdateImg}
-          onRequestClose={() => this.setState({showUpdateImg: false})}
-        >
-          <View style={{flex:1, width:width, marginTop: 22, justifyContent:"center", alignItems:"center"}}>
-            <View style={styles.updtImgCon}>
-              <View style={[styles.profileImg]}>
-                <ImageBackground source={{uri: this.state.newImage ?? this.state.waifu.img}} style={[styles.profileImg]}>
-                  <TextInput
-                    label="img Url"
-                    underlineColor= "teal"
-                    style={styles.textField}
-                    value={this.state.newImage}
-                    mode="Outlined"
-                    onChangeText={(text) => this.updateImgText(text)}
-                  />
-                </ImageBackground>
-              </View>
-              
-              {
-                this.state.newImage != null ?
-                <>
-                  <FAB
-                    //small
-                    color="white"
-                    style={styles.cancelFab}
-                    icon="cancel"
-                    onPress={() => this.setState({newImage: null})}
-                  />
-
-                  <FAB
-                    //small
-                    color="white"
-                    style={styles.submitFab}
-                    icon="check"
-                    onPress={this.updateImg}
-                  />
-                </>
-                : <></>
-              }
-            </View>
-          </View>
-        </Modal>
-      
       </View>
     );
   }
 }
 
-CharDetails.navigationOptions = {
+BuyWaifu.navigationOptions = {
   header: null,
 };
 
@@ -265,35 +179,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
-  updtImgCon: {
-    height: height,
-    width: width,
-    alignItems:"center",
-    justifyContent:"center",
-    position: 'relative',
-  },
-  imageContainer: {
-    flex: 1,
-  },
   bgView:{
     flex: 1,
     backgroundColor: "rgba(255,255,255,.25)"
   },
-  profileImg:{
-    height: height * .6,
-    width: width * .8,
-    borderRadius: 20,
-    marginTop: 5,
-    marginBottom: 5,
-    resizeMode: "cover",
-    overflow: "hidden",
-    shadowColor: '#000',
-    shadowOpacity: 1,
-    elevation: 10,
-    alignItems:"center",
-    justifyContent:"center",
-    position: 'absolute',
-    zIndex: 1,
+  imageContainer: {
+    flex: 1,
   },
   buttonRowView: {
     height: 75,
@@ -309,12 +200,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     elevation: 2,
   },
-	textField: {
-    position: "absolute",
-    bottom: 15,
-    width: '95%',
-		backgroundColor: "white"
-	},
   text:{
     fontFamily: "Edo",
     fontSize: 30,
@@ -345,32 +230,11 @@ const styles = StyleSheet.create({
     textShadowOffset: {width: -1, height: 1},
     textShadowRadius: 10,
 	},
-  imgUpdtFab: {
-    position: 'absolute',
-    margin: 8,
-    left: 0,
-    top: 0,
-    backgroundColor: chroma('aqua').hex()
-  },
   fab: {
     position: 'absolute',
     margin: 8,
     right: 0,
     top: 0,
     backgroundColor: chroma('aqua').hex()
-  },
-  cancelFab: {
-    position: 'absolute',
-    zIndex: 2,
-    left: 50,
-    bottom: 75,
-    backgroundColor: chroma('red').hex()
-  },
-  submitFab: {
-    position: 'absolute',
-    zIndex: 2,
-    right: 50,
-    bottom: 75,
-    backgroundColor: chroma('#80ff80').hex()
   },
 });

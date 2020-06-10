@@ -101,7 +101,7 @@ import {
           state.unSubWeeklyPoll()
           state.unSubDailyPoll()
           state.unSubTrades()
-          // state.unSubGauntlet()
+          state.unSubGauntlet()
         }
 
         return{
@@ -117,7 +117,7 @@ import {
           state.unSubWeeklyPoll()
           state.unSubDailyPoll()
           state.unSubTrades()
-          // state.unSubGauntlet()
+          state.unSubGauntlet()
         }
 
         return{

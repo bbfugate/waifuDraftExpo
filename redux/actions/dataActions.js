@@ -56,43 +56,112 @@ export async function getSearchData(){
 export async function useRankCoin(waifu){
   store.dispatch({ type: LOADING_UI });
 
-  await axios.post('/useRankCoin', waifu)
-  .then((res) => {
-    console.log(res.data)
-  })
-  .catch((err) => {
+  // await axios.post('/useRankCoin', waifu)
+  // .then((res) => {
+  //   console.log(res.data)
+  // })
+  // .catch((err) => {
+  //   store.dispatch({
+  //     type: SET_SNACKBAR,
+  //     payload: {type: "error", message: err.message}
+  //   });
+  // });
+  
+  var user = store.getState().user.credentials;
+	await firebase.firestore().doc(`waifus/${waifu.waifuId}`).get()
+	.then(doc => {
+		var stats = getBaseStats(doc.data().rank + 1);
+		return doc.ref.update({ ...stats })
+	})
+	.then(() => {
+		return firebase.firestore().doc(`users/${user.userId}`).get()
+	})
+	.then(doc => {
+		return doc.ref.update({ rankCoins: doc.data().rankCoins - 1 });
+	})
+  .then(()=>{
     store.dispatch({
       type: SET_SNACKBAR,
-      payload: err
+      payload: {type: "success", message: `${waifuData.name} Has Been Ranked Up`}
     });
-  });
-  
+  })
+  .catch((error) => {
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "error", message: `Error Ranking Up Waifu`}
+    });
+  })
+
   store.dispatch({ type: STOP_LOADING_UI });
 }
 
 export async function useStatCoin(waifu, stat){
   store.dispatch({ type: LOADING_UI });
 
-  await axios.post('/useStatCoin', {waifu, stat})
-  .then((res) => {
-    console.log(res.data)
-  })
-  .catch((err) => {
+  // await axios.post('/useStatCoin', {waifu, stat})
+  // .then((res) => {
+  //   console.log(res.data)
+  // })
+  // .catch((err) => {
+  //   store.dispatch({
+  //     type: SET_SNACKBAR,
+  //     payload: {type: "error", message: err.message}
+  //   });
+  // });
+  
+  
+	await firebase.firestore().doc(`waifus/${req.body.waifu.id}`).get()
+	.then(doc => {
+		var stats = {attack: doc.data().attack, defense: doc.data().defense}
+		stats[stat] = stats[stat] + 1;
+		
+		return doc.ref.update({ ...stats })
+	})
+	.then(() => {
+		return firebase.firestore().doc(`users/${user.userId}`).get()
+	})
+	.then(doc => {
+		return doc.ref.update({ rankCoins: doc.data().statCoins - 1 });
+	})
+  .then(()=>{
     store.dispatch({
       type: SET_SNACKBAR,
-      payload: err
+      payload: {type: "success", message: `${waifu.name}'s ${stat} Has Increased`}
     });
-  });
-  
+  })
+  .catch((error) => {
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "error", message: `Error Using Stat Coin`}
+    });
+  })
+
   store.dispatch({ type: STOP_LOADING_UI });
 }
 
-export function updateWaifuImg(waifu, imgUrl){
+export async function updateWaifuImg(waifu, imgUrl){
+  var success = false;
   store.dispatch({ type: LOADING_UI });
   
-  firebase.firestore().doc(`waifus/${waifu.waifuId}`).update({img : imgUrl})
+  await firebase.firestore().doc(`waifus/${waifu.waifuId}`).update({img : imgUrl})
+  .then(() => {
+    success = true;
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "success", message: `Updated Waifu Image`}
+    });
+  })
+  .catch((err) => {
+    success = false;
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "error", message: `Error Updating Waifu Image`}
+    });
+  })
 
   store.dispatch({ type: STOP_LOADING_UI });
+
+  return success
 }
 
 export async function submitVote(voteCount, waifu){
@@ -127,12 +196,15 @@ export async function submitVote(voteCount, waifu){
     return doc.ref.update({points: doc.data().points - voteObj.vote})
   })
   .then(()=>{
-    console.log("submit vote done")
-  })
-  .catch((error) => {
     store.dispatch({
       type: SET_SNACKBAR,
-      payload: error
+      payload: {type: "success", message: `Vote Has Been Submitted`}
+    });
+  })
+  .catch((err) => {
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "error", message: err.message}
     });
   })
   // await axios.post('/submitVote', {waifuId: waifu.waifuId, voteObj})
@@ -152,16 +224,49 @@ export async function submitVote(voteCount, waifu){
 export async function submitWaifu(waifuData){
   store.dispatch({ type: LOADING_UI });
 
-  await axios.post('/submitWaifu', waifuData)
-  .then((res) => {
-    console.log(res.data)
+  // await axios.post('/submitWaifu', waifuData)
+  // .then((res) => {
+  //   console.log(res.data)
+  // })
+  // .catch((err) => {
+  //   store.dispatch({
+  //     type: SET_SNACKBAR,
+  //     payload: {type: "error", message: err.message}
+  //   });
+  // });
+
+  var user = store.getState().user.credentials;
+  await firebase.firestore().collection("waifus").where("link", "==", waifuData.link).get()
+  .then((data) => {
+    waifuData.husbando = "Poll"
+    waifuData.submittedBy = user.userName;
+    waifuData.type = waifuData.publisher != null ? waifuData.publisher : waifuData.type = "Anime-Manga";
+    waifuData.rank = 1;
+    waifuData.attack = 3;
+    waifuData.defense = 1;
+    return firebase.firestore().collection("waifus").add(waifuData)
   })
-  .catch((err) => {
+  .then(() => {
+    return firebase.firestore().doc(`/users/${user.userId}`).get()
+  })
+  .then((doc) => {
+    var updtUser = doc.data();
+    updtUser.submitSlots = updtUser.submitSlots - 1;
+    return firebase.firestore().doc(`/users/${user.userId}`).set(updtUser)
+  })
+  .then(() => {
     store.dispatch({
       type: SET_SNACKBAR,
-      payload: err
+      payload: {type: "success", message: `${waifuData.name} Was Submitted`}
     });
-  });
+  })
+  .catch((err) => {
+    console.log(err)
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "error", message: "Error Submitting Waifu"}
+    });
+  })
   
   store.dispatch({ type: STOP_LOADING_UI });
 }
@@ -169,16 +274,30 @@ export async function submitWaifu(waifuData){
 export async function buyWaifu(waifu){
   store.dispatch({ type: LOADING_UI });
 
-  await axios.post('/buyWaifu', waifu)
-  .then((res) => {
-    console.log(res.data)
+  var user = store.getState().user.credentials;
+  await firebase.firestore().doc(`waifus/${waifu.waifuId}`).update({husbando: user.userName, husbandoId: user.userId})
+  .then(() => {
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "success", message: `${waifu.name} Was Purchased`}
+    });
   })
   .catch((err) => {
     store.dispatch({
       type: SET_SNACKBAR,
-      payload: err
+      payload: {type: "error", message: `Error Buying Waifu From Shop`}
     });
-  });
+  })
+  // await axios.post('/buyWaifu', waifu)
+  // .then((res) => {
+  //   console.log(res.data)
+  // })
+  // .catch((err) => {
+  //   store.dispatch({
+  //     type: SET_SNACKBAR,
+  //     payload: {type: "error", message: err.message}
+  //   });
+  // });
   
   store.dispatch({ type: STOP_LOADING_UI });
 }
@@ -203,28 +322,48 @@ export async function submitTrade(trade){
   .then(() => {
     store.dispatch({
       type: SET_SNACKBAR,
-      payload: [{ type: "success", message: "Trade Successfully Submitted" }]
+      payload: { type: "success", message: "Trade Successfully Submitted" }
     });
   })
   .catch((err) => {
     store.dispatch({
       type: SET_SNACKBAR,
-      payload: [{ type: "error", message: "Error Submitting Trade" }]
+      payload: { type: "error", message: "Error Submitting Trade" }
     });
   });
   
   store.dispatch({ type: STOP_LOADING_UI });
 }
 
-export function updateTrade(trade, status){
-  firebase.firestore().doc(`trades/${trade.id}`).update({status})
+export async function updateTrade(trade, status){
+  store.dispatch({ type: LOADING_UI });
+
+  await firebase.firestore().doc(`trades/${trade.id}`).update({status})
+  .then(() => {
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "success", message: `${waifu.name} Was Purchased`}
+    });
+  })
+  .catch((err) => {
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "error", message: `Error Buying Waifu From Shop`}
+    });
+  })
+
+  store.dispatch({ type: STOP_LOADING_UI });
 }
 
 export async function fightBoss(bossFightObj){
+  store.dispatch({ type: LOADING_UI })
+
   var uid = await firebase.auth().currentUser.uid;
-  var waifu = (await firebase.firestore().doc(`waifus/${bossFightObj.waifuId}`).get())
-  var boss = (await firebase.firestore().doc(`gauntlet/${bossFightObj.bossId}`).get())
-  var fights = _.cloneDeep(boss.data().fights);
+  var waifu = (await firebase.firestore().doc(`waifus/${bossFightObj.waifuId}`).get()).data()
+  var bossRef = (await firebase.firestore().doc(`gauntlet/${bossFightObj.bossId}`).get())
+  var boss = bossRef.data()
+  var fights = _.cloneDeep(boss.fights);
+
   var userFightRec = fights.filter(x => x.husbandoId == uid)
   if(_.isEmpty(userFightRec)){
     userFightRec = {
@@ -240,49 +379,41 @@ export async function fightBoss(bossFightObj){
   }
 
   var rolls = [];
-  for(var i = 0; i < bossFightObj.diceCount; i++){
-    rolls.push(randomNumber(1, bossFightObj.attack))
+  for(var i = 0; i < waifu.rank; i++){
+    rolls.push(randomNumber(1, waifu.attack))
   }
 
   var totalDmg = rolls.reduce((a, b) => a + b, 0);
 
   var rewardResult = "";
   var fightResult = 0;
-  //calculates final result
-  if(totalDmg > bossFightObj.bossHp){
-    fightResult = 1;
-    rewardResult = await buildBossRewardStr(bossFightObj.bossReward);
-    userFightRec.waifusUsed.push(waifu.id)
-    userFightRec.defeated = true;
 
-    /*store.dispatch({
-      type: SET_SNACKBAR,
-      payload: [{ type: "Success", message: "You've Defeated The Boss!" }]
-    }); */
+  //calculates final result
+  if(totalDmg > boss.hp){
+    fightResult = 1;
+    rewardResult = await buildBossRewardStr(boss.reward);
+    userFightRec.waifusUsed.push(bossFightObj.waifuId)
+    userFightRec.defeated = true;
   }
   else{
-    if((bossFightObj.bossHp - totalDmg) >= bossFightObj.defense)
+    if((boss.hp - totalDmg) >= waifu.defense)
     {
       fightResult = 2;
-      rewardResult = "Waifu Lost And Was Sent To Shop!";
-      userFightRec.waifusUsed.push(waifu.id)
+      rewardResult = "Waifu Has Been Defeated And Was Sent To Shop";
+      userFightRec.waifusUsed.push(bossFightObj.waifuId)
       await waifu.ref.update({husbando: "Shop", husbandoId:""})
-
-      /*store.dispatch({
-        type: SET_SNACKBAR,
-        payload: [{ type: "Warning", message: "Your Waifu Was Lost To The Shop" }]
-      }); */
     }
     else
     {
       fightResult = 3;
       rewardResult = "Boss Not Defated. No Reward";
-      userFightRec.waifusUsed.push(waifu.id)
+      userFightRec.waifusUsed.push(bossFightObj.waifuId)
     }
   }
 
-  await boss.ref.update({fights})
+  await bossRef.ref.update({fights})
 
+  store.dispatch({ type: STOP_LOADING_UI })
   return {totalDmg, rolls, fightResult, rewardResult}
 }
 
@@ -297,7 +428,7 @@ export async function setRealTimeListeners(userId){
     if (!doc.exists) {
       store.dispatch({
         type: SET_SNACKBAR,
-        payload: [{ type: "info", message: "No User" }]
+        payload: { type: "info", message: "No User" }
       });
       return;
     }
@@ -318,12 +449,12 @@ export async function setRealTimeListeners(userId){
         payload: {credentials: user.credentials, waifus: user.waifus}
       });
 
-      if(oldUser.credentials != null && !_.isEqual(oldUser.credentials, user.credentials)){
-        store.dispatch({
-          type: SET_SNACKBAR,
-          payload: [{ type: "info", message: "User Data Updated" }]
-        });
-      }
+      // if(oldUser.credentials != null && !_.isEqual(oldUser.credentials, user.credentials)){
+      //   store.dispatch({
+      //     type: SET_SNACKBAR,
+      //     payload: { type: "info", message: "User Data Updated" }
+      //   });
+      // }
     })
     .catch(err => {
       console.log(err)
@@ -490,60 +621,60 @@ export async function setRealTimeListeners(userId){
     // store.dispatch({ type: STOP_LOADING_UI });
   });
   
-  // var unSubGauntlet = firebase.firestore().collection("gauntlet").onSnapshot(function(querySnapshot) {
-  //   try{
-  //     var bosses = [];
-  //     querySnapshot.forEach(function(doc) {
-  //       bosses.push({bossId: doc.id , ...doc.data()});
-  //     });
+  var unSubGauntlet = firebase.firestore().collection("gauntlet").onSnapshot(function(querySnapshot) {
+    try{
+      var bosses = [];
+      querySnapshot.forEach(function(doc) {
+        bosses.push({bossId: doc.id , ...doc.data()});
+      });
 
-  //     store.dispatch({
-  //       type: SET_GAUNTLET,
-  //       payload: bosses
-  //     });
-  //   }
-  //   catch(err){
-  //     console.log(err);
-  //     store.dispatch({
-  //       type: SET_GAUNTLET,
-  //       payload: []
-  //     });
-  //   }
-  //   store.dispatch({ type: STOP_LOADING_UI });
-  //   store.dispatch({ type: STOP_LOADING_DATA });
-  // });
-  store.dispatch({ type: SUB_SNAPSHOTS, payload: {unSubUser, unSubWaifus, unSubOtherUsers, unSubTrades, unSubPollWaifus, unSubDailyPoll, unSubWeeklyPoll } })
-  // store.dispatch({ type: SUB_SNAPSHOTS, payload: {unSubUser, unSubOtherUsers, unSubWaifus, unSubPollWaifus, unSubDailyPoll, unSubWeeklyPoll, unSubTrades, unSubGauntlet} })
+      store.dispatch({
+        type: SET_GAUNTLET,
+        payload: bosses
+      });
+    }
+    catch(err){
+      console.log(err);
+      store.dispatch({
+        type: SET_GAUNTLET,
+        payload: []
+      });
+    }
+    store.dispatch({ type: STOP_LOADING_UI });
+    store.dispatch({ type: STOP_LOADING_DATA });
+  });
+  
+  store.dispatch({ type: SUB_SNAPSHOTS, payload: {unSubUser, unSubOtherUsers, unSubWaifus, unSubPollWaifus, unSubDailyPoll, unSubWeeklyPoll, unSubTrades, unSubGauntlet} })
 }
 
 async function buildBossRewardStr(reward){
-  var result = "Boss Was Defeated! Rewards Gained:";
+  var result = "Boss Defeated! Rewards Gained";
   var rewards = _.keys(reward);
   var uid = await firebase.auth().currentUser.uid;
   var user = await firebase.firestore().doc(`users/${uid}`).get()
 
-  rewards.forEach(x => {
+  rewards.forEach(async x => {
     switch(x){
       case "points":
-        result += `\n ${reward[x]} Points`
-        user.ref.update({points: user.data().points + reward[x]})
-/*           store.dispatch({
+        // result += `\n ${reward[x]} Points`
+        await user.ref.update({points: user.data().points + reward[x]})
+        /*store.dispatch({
           type: SET_SNACKBAR,
           payload: [{ type: "info", message:  `${reward[x]} Points Added` }]
         }); */
         break;
       case "statCoins":
-        result += `\n ${reward[x]} Stat Coins`
-        user.ref.update({statCoins: user.data().statCoins + reward[x]})
-/*           store.dispatch({
+        // result += `\n ${reward[x]} Stat Coins`
+        await user.ref.update({statCoins: user.data().statCoins + reward[x]})
+        /*store.dispatch({
           type: SET_SNACKBAR,
           payload: [{ type: "info", message: `${reward[x]} Stat Coins Added` }]
         }); */
         break;
       case "rankCoins":
-        result += `\n ${reward[x]} Rank Coins`
-        user.ref.update({rankCoins: user.data().rankCoins + reward[x]})
-/*           store.dispatch({
+        // result += `\n ${reward[x]} Rank Coins`
+        await user.ref.update({rankCoins: user.data().rankCoins + reward[x]})
+        /*store.dispatch({
           type: SET_SNACKBAR,
           payload: [{ type: "info", message: `${reward[x]} Rank Coins Added` }]
         }); */
@@ -917,6 +1048,30 @@ function getRandWaifu(characters){
 
   return shuffle(charSet)[Math.floor(Math.random() * charSet.length)]
 }
+
 function randomNumber(min, max) {  
   return Math.ceil(Math.random() * max); 
+}
+
+function getBaseStats(rank){
+	var stats = { rank, attack: 1, defense: 1}
+	switch (rank){
+		case 1:
+			stats.attack = 3;
+			stats.defense = 1;
+			break;
+		case 2:
+			stats.attack = 7;
+			stats.defense = 5;
+			break;
+		case 3:
+			stats.attack = 12;
+			stats.defense = 10;
+			break;
+		case 4:
+			stats.attack = 20;
+			stats.defense = 15;
+			break;
+	}
+	return stats;
 }

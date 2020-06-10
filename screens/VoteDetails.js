@@ -46,6 +46,7 @@ export default class VoteDetails extends Component {
       voteCount: 0
     };
     
+    this.submitVote = this.submitVote.bind(this)
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
   }
@@ -169,6 +170,7 @@ export default class VoteDetails extends Component {
     console.log(waifu)
 
     submitVote(vote, waifu)
+    this.setState({voteCount: 0})
   }
 
   _onMomentumScrollEnd = (e, state, context) => {

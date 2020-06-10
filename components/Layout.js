@@ -5,11 +5,15 @@ import { Platform, StatusBar, StyleSheet, View, Image, Dimensions, SafeAreaView}
 import {
   LOADING_UI,
   STOP_LOADING_UI,
-  SET_USER
+	SET_USER,
+	SET_SNACKBAR
 } from '../redux/types';
 
 //Native paper
 import { Text, TextInput, Button, ActivityIndicator } from 'react-native-paper';
+
+//Components
+import Toast from '../components/Toast'
 
 //Expo
 import { Video } from 'expo-av';
@@ -121,6 +125,8 @@ class Layout extends Component {
 					</View>
 				: <></>
 				}
+
+
 				<>
 					{this.state.authUser == null ? 
 						<LoginSignUp />
@@ -128,6 +134,8 @@ class Layout extends Component {
 						<BottomTabNavigator />
 					}
 				</>
+				
+				<Toast/>
 			</View>
 		);
 	}

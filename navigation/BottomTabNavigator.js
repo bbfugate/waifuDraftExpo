@@ -11,9 +11,6 @@ import { createMaterialBottomTabNavigator } from '@react-navigation/material-bot
 import TabBarIcon from '../components/TabBarIcon';
 
 //Screens
-import HomeScreen from '../screens/Home';
-import VoteDetailsScreen from '../screens/VoteDetails';
-import CharDetailsScreen from '../screens/CharDetails';
 import ProfileScreen from '../screens/Profile';
 
 import TradeScreen from '../screens/Trade';
@@ -22,16 +19,27 @@ import OtherUserCharDetailsScreen from '../screens/OtherUserCharDetails';
 import NewTradeScreen from '../screens/NewTrade';
 import ViewTradeScreen from '../screens/ViewTrade';
 
+import HomeScreen from '../screens/Home';
+import VoteDetailsScreen from '../screens/VoteDetails';
+import CharDetailsScreen from '../screens/CharDetails';
+
+import GauntletScreen from '../screens/Gauntlet';
+import BossFightScreen from '../screens/BossFight';
+
 import SearchScreen from '../screens/Search';
 import SearchSeriesScreen from '../screens/SearchSeries';
 import SearchCharactersScreen from '../screens/SearchCharacters';
 import SubmitCharacterScreen from '../screens/SubmitCharacter';
 
-import store from '../redux/store';
-import { LOADING_UI } from '../redux/types';
+import ShopScreen from '../screens/Shop';
+import BuyWaifuScreen from '../screens/BuyWaifu';
+
+const homeIcon = require('../assets/images/HomeIcon.png')
+const bossIcon = require('../assets/images/atkIcon.png')
 
 //Chroma
 const chroma = require('chroma-js')
+const { width, height } = Dimensions.get('window');
 
 const INITIAL_ROUTE_NAME = 'Home';
 const BottomTab = createMaterialBottomTabNavigator();
@@ -103,17 +111,44 @@ function TradeStackScreen() {
   );
 }
 
-export default function BottomTabNavigator({ navigation, route }) {
-  // Set the header title on the parent stack navigator depending on the
-  // currently active tab. Learn more in the documentation:
-  // https://reactnavigation.org/docs/en/screen-options-resolution.html
+const GauntletStack = createStackNavigator();
+function GauntletStackScreen() {
+  return (
+    <GauntletStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        cardStyle: {backgroundColor: "transparent"}
+      }}
+    >
+      <GauntletStack.Screen name="Gauntlet" component={GauntletScreen} />
+      <GauntletStack.Screen name="BossFight" component={BossFightScreen} />
+    </GauntletStack.Navigator>
+  );
+}
 
+const ShopStack = createStackNavigator();
+function ShopStackScreen() {
+  return (
+    <ShopStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        cardStyle: {backgroundColor: "transparent"}
+      }}
+    >
+      <ShopStack.Screen name="Shop" component={ShopScreen} />
+      <ShopStack.Screen name="BuyWaifu" component={BuyWaifuScreen} />
+    </ShopStack.Navigator>
+  );
+}
+
+export default function BottomTabNavigator({ navigation, route }) {
   return (
     <NavigationContainer>
       <BottomTab.Navigator
         initialRouteName={INITIAL_ROUTE_NAME}
         renderTouchable
-        barStyle={{ backgroundColor: 'white', borderTopColor: chroma('aqua').hex(), borderTopWidth: 2}}
+        // activeColor="#fff"
+        // inactiveColor="#000"
         keyboardHidesNavigationBar
         labeled={false}
       >
@@ -121,28 +156,54 @@ export default function BottomTabNavigator({ navigation, route }) {
           component={ProfileStackScreen}
           options={{
             title: 'Profile',
-            tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="user" />,
-          }}
-        />
-        <BottomTab.Screen name="Home"
-          component={HomeStackScreen}
-          options={{
-            title: 'Home',
-            tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="home" />,
-          }}
-        />
-        <BottomTab.Screen name="Search"
-          component={SearchStackScreen}
-          options={{
-            title: 'Search',
-            tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="search" />,
+            tabBarColor: chroma('aqua').darken(.25).hex(),
+            tabBarIcon: ({ focused }) => <TabBarIcon activeColor="white" focused={focused} name="user" />,
           }}
         />
         <BottomTab.Screen name="Trade"
           component={TradeStackScreen}
           options={{
             title: 'Trade',
-            tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} name="exchange-alt" />,
+            tabBarColor: chroma('silver').hex(),
+            tabBarIcon: ({ focused }) => <TabBarIcon activeColor="white" focused={focused} name="exchange-alt" />,
+          }}
+        />
+        <BottomTab.Screen name="Home"
+          component={HomeStackScreen}
+          options={{
+            title: 'Home',
+            tabBarColor: "black",
+            tabBarIcon: ({ focused }) =>
+            // <View style={{flex:1, alignItems: "center", justifyContent:"center"}}>
+              // {/* <Image source={homeIcon} style={{height:65, width:65, position:"absolute", alignSelf:"center"}} /> */}
+              <TabBarIcon focused={focused} activeColor='white' name="home" style={{position:"absolute", alignSelf:"center"}}  />
+            // </View>
+            ,
+          }}
+        />
+        <BottomTab.Screen name="Shop"
+          component={ShopStackScreen}
+          options={{
+            title: 'Shop',
+            tabBarColor: chroma('white').hex(),
+            tabBarIcon: ({ focused }) => <TabBarIcon activeColor="black" focused={focused} name="dollar-sign" />,
+          }}
+        />
+        <BottomTab.Screen name="Gauntlet"
+          component={GauntletStackScreen}
+          options={{
+            title: 'Gauntlet',
+            tabBarColor: chroma('rgba(255,149,0,1)'),
+            tabBarIcon: ({ focused }) => <Image style={{height: 30, width: 30, tintColor: !focused ? '#ccc' : 'white'}} source={bossIcon} />,
+          }}
+        />
+        <BottomTab.Screen name="Search"
+          component={SearchStackScreen}
+          options={{
+            title: 'Search',
+            tabBarLabel: "Search",
+            tabBarColor: chroma('aquamarine').luminance(0.5),
+            tabBarIcon: ({ focused }) => <TabBarIcon activeColor="white" focused={focused} name="search" />,
           }}
         />
       </BottomTab.Navigator>

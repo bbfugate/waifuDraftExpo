@@ -52,7 +52,16 @@ export default class ViewTrade extends Component {
 
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
       var trade = newVal.trades.filter(x => x.tradeId == this.state.trade.tradeId);
-			this.setState({ pollIsActive: newVal.poll.weekly.isActive, trade })
+      
+      if(!_.isEmpty(trade)){
+        this.setState({
+          trade: trade[0],
+          pollIsActive: newVal.poll.weekly.isActive,
+        })
+      }
+      else{
+        this.state.navigation.goBack()
+      }
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
@@ -64,12 +73,19 @@ export default class ViewTrade extends Component {
     }))
     
     var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
-    this.setState({
-      fromUser: users.filter(x => x.userId == this.state.trade.from.husbandoId)[0],
-      toUser: users.filter(x => x.userId == this.state.trade.to.husbandoId)[0],
-      userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
-      pollIsActive: store.getState().data.poll.weekly.isActive,
-    })
+    var trade = store.getState().data.trades.filter(x => x.tradeId == this.state.trade.tradeId);
+    if(!_.isEmpty(trade)){
+      this.setState({
+        trade: trade[0],
+        fromUser: users.filter(x => x.userId == this.state.trade.from.husbandoId)[0],
+        toUser: users.filter(x => x.userId == this.state.trade.to.husbandoId)[0],
+        userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
+        pollIsActive: store.getState().data.poll.weekly.isActive,
+      })
+    }
+    else{
+      this.state.navigation.goBack()
+    }
   }
 
   unSetSubscribes(){
@@ -93,8 +109,8 @@ export default class ViewTrade extends Component {
 
   async updateTrade(status){
 
-    await updateTrade(this.state.trade, status);
     this.state.navigation.goBack()
+    await updateTrade(this.state.trade, status);
   }
 
   render(){
@@ -146,7 +162,7 @@ export default class ViewTrade extends Component {
                 <View style={{flex: 1, width: width}}>
                   <FlatGrid
                     itemDimension={150}
-                    items={this.state.fromUser.waifus.filter(x => this.state.trade.from.waifus.includes(x.waifuId))}
+                    items={this.state.fromUser.waifus.filter(x => this.state.trade.from.waifus.map(x => x.waifuId).includes(x.waifuId))}
                     style={styles.gridView}
                     spacing={20}
                     renderItem={({item, index}) => {
@@ -239,7 +255,7 @@ export default class ViewTrade extends Component {
                 <View style={{flex: 1, width: width}}>
                   <FlatGrid
                     itemDimension={150}
-                    items={this.state.toUser.waifus.filter(x => this.state.trade.to.waifus.includes(x.waifuId))}
+                    items={this.state.toUser.waifus.filter(x => this.state.trade.to.waifus.map(x => x.waifuId).includes(x.waifuId))}
                     style={styles.gridView}
                     spacing={20}
                     renderItem={({item, index}) => {
