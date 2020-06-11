@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Platform, StatusBar, StyleSheet, View, Image, Dimensions, SafeAreaView} from 'react-native';
 import { Text, Button, TouchableRipple } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 //Navigation
 import { NavigationContainer } from '@react-navigation/native';
@@ -11,6 +12,9 @@ import { createMaterialBottomTabNavigator } from '@react-navigation/material-bot
 import TabBarIcon from '../components/TabBarIcon';
 
 //Screens
+import ChatScreen from '../screens/Chat';
+import ViewChatScreen from '../screens/ViewChat';
+
 import ProfileScreen from '../screens/Profile';
 
 import TradeScreen from '../screens/Trade';
@@ -107,6 +111,7 @@ function TradeStackScreen() {
       <TradeStack.Screen name="OtherUserCharDetails" component={OtherUserCharDetailsScreen} />
       <TradeStack.Screen name="NewTrade" component={NewTradeScreen} />
       <TradeStack.Screen name="ViewTrade" component={ViewTradeScreen} />
+      <TradeStack.Screen name="ViewChat" component={ViewChatScreen} />
     </TradeStack.Navigator>
   );
 }
@@ -141,6 +146,21 @@ function ShopStackScreen() {
   );
 }
 
+const ChatStack = createStackNavigator();
+function ChatStackScreen() {
+  return (
+    <ChatStack.Navigator
+      screenOptions={{
+        headerShown: false,
+        cardStyle: {backgroundColor: "transparent"}
+      }}
+    >
+      <ChatStack.Screen name="Chat" component={ChatScreen} />
+      <ChatStack.Screen name="ViewChat" component={ViewChatScreen} />
+    </ChatStack.Navigator>
+  );
+}
+
 export default function BottomTabNavigator({ navigation, route }) {
   return (
     <NavigationContainer>
@@ -160,6 +180,18 @@ export default function BottomTabNavigator({ navigation, route }) {
             tabBarIcon: ({ focused }) => <TabBarIcon activeColor="white" focused={focused} name="user" />,
           }}
         />
+
+        <BottomTab.Screen name ="Chats"
+          component={ChatStackScreen}
+          options={{
+            title: "Chats",
+            tabBarColor: "white",
+            tabBarIcon: ({ focused }) => <MaterialCommunityIcons name="message-text-outline" size={24} color={focused ? "black" : "#ccc"} />,
+          }}
+        >
+
+        </BottomTab.Screen>
+
         <BottomTab.Screen name="Trade"
           component={TradeStackScreen}
           options={{

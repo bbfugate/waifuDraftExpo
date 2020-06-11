@@ -16,7 +16,8 @@ import {
   UNSUB_SNAPSHOTS,
   SUB_SNAPSHOTS,
   SET_GAUNTLET,
-  SET_USER
+  SET_USER,
+  SET_MESSAGES
 } from '../types';
 
 import * as firebase from 'firebase';
@@ -644,7 +645,30 @@ export async function setRealTimeListeners(userId){
     store.dispatch({ type: STOP_LOADING_DATA });
   });
   
-  store.dispatch({ type: SUB_SNAPSHOTS, payload: {unSubUser, unSubOtherUsers, unSubWaifus, unSubPollWaifus, unSubDailyPoll, unSubWeeklyPoll, unSubTrades, unSubGauntlet} })
+  var unSubChats = firebase.firestore().collection("chats").where("users", 'array-contains', userId).onSnapshot(function(querySnapshot) {
+    try{
+      var chats = [];
+      querySnapshot.forEach(function(doc) {
+        chats.push({chatId: doc.id , ...doc.data()});
+      });
+
+      store.dispatch({
+        type: SET_MESSAGES,
+        payload: chats
+      });
+    }
+    catch(err){
+      console.log(err);
+      store.dispatch({
+        type: SET_MESSAGES,
+        payload: []
+      });
+    }
+
+    store.dispatch({ type: STOP_LOADING_UI });
+  });
+
+  store.dispatch({ type: SUB_SNAPSHOTS, payload: {unSubUser, unSubOtherUsers, unSubWaifus, unSubPollWaifus, unSubDailyPoll, unSubWeeklyPoll, unSubTrades, unSubGauntlet, unSubChats} })
 }
 
 async function buildBossRewardStr(reward){

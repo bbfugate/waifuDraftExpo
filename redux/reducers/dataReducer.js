@@ -102,6 +102,7 @@ import {
           state.unSubDailyPoll()
           state.unSubTrades()
           state.unSubGauntlet()
+          state.unSubChats()
         }
 
         return{
@@ -118,6 +119,7 @@ import {
           state.unSubDailyPoll()
           state.unSubTrades()
           state.unSubGauntlet()
+          state.unSubChats()
         }
 
         return{

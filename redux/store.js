@@ -6,6 +6,7 @@ import thunk from 'redux-thunk';
 import userReducer from './reducers/userReducer';
 import dataReducer from './reducers/dataReducer';
 import uiReducer from './reducers/uiReducer';
+import chatReducer from './reducers/chatReducer';
 
 const initialState = {};
 
@@ -15,6 +16,7 @@ const reducers = combineReducers({
   user: userReducer,
   data: dataReducer,
   UI: uiReducer,
+  chat: chatReducer,
   firebase: firebaseReducer,
   firestore: firestoreReducer // <- needed if using firestore
 });

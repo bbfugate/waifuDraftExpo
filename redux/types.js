@@ -26,6 +26,9 @@ export const SET_WAIFU_LIST = 'SET_WAIFU_LIST';
 export const SET_TRADES = 'SET_TRADES';
 export const SET_GAUNTLET = 'SET_GAUNTLET';
 
+//Chat reducer types
+export const SET_MESSAGES = 'SET_MESSAGES';
+
 //listeners
 export const UNSUB_SNAPSHOTS = "UNSUB_SNAPSHOTS";
 export const SUB_SNAPSHOTS = "SUB_SNAPSHOTS";
