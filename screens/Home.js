@@ -255,7 +255,7 @@ export default class Home extends Component {
               <View style={{ flex: 1, flexDirection:'row', alignItems:"center", justifyContent:"center" }}>
                 <Carousel
                   data={this.state.dailyPollWaifus.map(x => {
-                    var topVote = {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
+                    var topVote = {vote: "?", img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
                     var votes = _.orderBy(x.votes, ['vote'], ['desc']);
 
                     if(this.state.dailyPoll == null)

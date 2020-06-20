@@ -19,7 +19,7 @@ import watch from 'redux-watch'
 
 const { width, height } = Dimensions.get('window');
 
-function VoteRow({ vote, otherUsers }) {
+function VoteRow({ vote, pollType, isActive, otherUsers }) {
   return (
     <View style={styles.voteRow}>
       <View style={{flex: 2}}>
@@ -28,7 +28,12 @@ function VoteRow({ vote, otherUsers }) {
         </View>
       </View>
       <Text style={styles.voteRowText}>{vote.husbando}</Text>
-      <Text style={styles.voteRowVoteCount}>{vote.vote}</Text>
+
+      {
+        pollType == "daily" && isActive ?
+          <Text style={styles.voteRowVoteCount}>{vote.vote}</Text>
+        : <></>
+      }
     </View>
   );
 }
@@ -88,7 +93,6 @@ export default class VoteDetails extends Component {
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
       this.setState({userInfo: newVal.credentials})
     }))
-
     
     var updtUserInfo = store.getState().user.credentials;
     var updtWaifu = [store.getState().data.weeklyPollWaifus, store.getState().data.dailyPollWaifus].flat().filter(x => x.waifuId == this.state.waifu.waifuId)[0]
@@ -167,9 +171,6 @@ export default class VoteDetails extends Component {
   }
 
   submitVote(vote, waifu){
-    console.log(vote)
-    console.log(waifu)
-
     submitVote(vote, waifu)
     this.setState({voteCount: 0})
   }
@@ -205,8 +206,15 @@ export default class VoteDetails extends Component {
 
                 <View style={[styles.voteView]}>
                   <FlatList
-                    data={this.state.pollType == "daily" && this.state.poll.isActive ? [] : _.orderBy(this.state.waifu.votes, ['vote'], ['desc'])}
-                    renderItem={({ item }) => <VoteRow vote={item} otherUsers={_.cloneDeep(this.state.otherUsers).concat(this.state.userInfo)} />}
+                    data={this.state.pollType == "daily" && this.state.poll.isActive ? _.shuffle(this.state.waifu.votes) : _.orderBy(this.state.waifu.votes, ['vote'], ['desc'])}
+                    renderItem={({ item }) => 
+                      <VoteRow 
+                        pollType={this.state.pollType} 
+                        isActive={this.state.poll.isActive} 
+                        vote={item} 
+                        otherUsers={_.cloneDeep(this.state.otherUsers).concat(this.state.userInfo)} 
+                      />
+                    }
                     keyExtractor={item => item.husbandoId}
                   />
                   

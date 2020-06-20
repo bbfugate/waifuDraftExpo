@@ -109,29 +109,58 @@ export default class SearchSeries extends Component {
           <View style={styles.slide}>
             <View style={styles.SeriesListView}>
               <FlatGrid
-                itemDimension={150}
+                itemDimension={100}
                 items={this.state.chars}
                 style={styles.gridView}
-                spacing={20}
+                spacing={10}
                 renderItem={({item, index}) => {
                   const isSubmitted = this.state.waifuList.map(x => x.link).includes(item.link);
+                  const popRank = item.popRank ?? null;
+
+                  var rankColor = 'black'
+                  if(isSubmitted)
+                  {
+                    item = this.state.waifuList.filter(x => x.link == item.link)[0]
+
+                    switch(item.rank){
+                      case 1:
+                        rankColor = "#ff0000"
+                        break;
+                      case 2:
+                        rankColor = "#835220"
+                        break;
+                      case 3:
+                        rankColor = "#7b7979"
+                        break;
+                      case 4:
+                        rankColor = "#b29600"
+                        break;
+                    }
+                  }
+                  rankColor = chroma(rankColor).alpha(.5)
 
                   return(
-                    <TouchableOpacity activeOpacity={.25} onPress={() => this.selectCharacter(item)} style={styles.itemContainer}>
-                      <Image
-                        style={{
-                          flex: 1,
-                          resizeMode: "cover",
-                          borderRadius: 10,
-                          opacity: 1,
-                          ...StyleSheet.absoluteFillObject,
-                        }}
-                        source={{uri: item.img}}
-                      />
-                      <View style={{height: 50,  padding: 2, backgroundColor: isSubmitted ? chroma('red') : chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
-                        <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.name.length > 15 ? item.name.slice(0,15) + '...' : item.name}</Text>
+                    <View style={{flex:1, position:"relative", marginTop: 10}}>
+
+                      <View style={{height:10, width:10, position:"absolute", elevation: 6, zIndex:2, top:-5,right:-5, backgroundColor:"red"}} >
+
                       </View>
-                    </TouchableOpacity>
+                      <TouchableOpacity activeOpacity={.25} onPress={() => this.selectCharacter(item)} style={[styles.itemContainer]}>
+                        <Image
+                          style={{
+                            flex: 1,
+                            resizeMode: "cover",
+                            borderRadius: 10,
+                            opacity: 1,
+                            ...StyleSheet.absoluteFillObject,
+                          }}
+                          source={{uri: item.img}}
+                        />
+                        <View style={{minHeight: 50, height: 'auto',  padding: 2, backgroundColor: rankColor, alignItems:"center", justifyContent:"center"}}>
+                          <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.name.length > 15 ? item.name.slice(0,15) + '...' : item.name}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
                   )
                 }}
               />
@@ -160,10 +189,12 @@ const styles = StyleSheet.create({
     backgroundColor:"black"
   },
   text: {
-    color: "white",
+    color: "black",
+    fontFamily: "Edo",
     fontSize: 30,
     fontWeight: "bold",
-    textAlign: "center"
+    textAlign: "center",
+    alignSelf: "center"
   },
   image: {
     flex: 1,
@@ -187,11 +218,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     borderRadius: 10,
     // padding: 10,
-    height: 250,
+    height: 125,
     overflow: "hidden",
     shadowColor: '#000',
     shadowOpacity: 1,
-    elevation: 10
+    elevation: 5
   },
   slideContainer:{
     flex:1,

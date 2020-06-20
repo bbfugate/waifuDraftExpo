@@ -144,6 +144,14 @@ export default class OtherUserProfile extends Component {
   }
 
   render(){
+    var waifuGroups = _.chain(_.cloneDeep(this.state.otherUser.waifus))
+    .groupBy(waifu => Number(waifu.rank))
+    .map((waifus, rank) => ({ rank: Number(rank), waifus }))
+    .orderBy(group => Number(group.rank), ['desc'])
+    .value()
+
+    const waifus = waifuGroups.flatMap(x => x.waifus)
+
     return (
       <>
         {this.state.loading ?
@@ -249,7 +257,7 @@ export default class OtherUserProfile extends Component {
                 </View>
                 <FlatGrid
                   itemDimension={150}
-                  items={this.state.otherUser.waifus}
+                  items={waifus}
                   style={styles.gridView}
                   // staticDimension={300}
                   // fixed
