@@ -19,7 +19,7 @@ import watch from 'redux-watch'
 
 const { width, height } = Dimensions.get('window');
 
-function VoteRow({ vote }) {
+function VoteRow({ vote, otherUsers }) {
   return (
     <View style={styles.voteRow}>
       <View style={{flex: 2}}>
@@ -42,6 +42,7 @@ export default class VoteDetails extends Component {
       pollType: props.route.params.poll.firstVote != null ? "weekly" : "daily",
       waifu: props.route.params.waifu,
       userInfo: store.getState().user.credentials,
+      otherUsers: store.getState().user.otherUsers,
       topVote: {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"},
       voteCount: 0
     };
@@ -205,7 +206,7 @@ export default class VoteDetails extends Component {
                 <View style={[styles.voteView]}>
                   <FlatList
                     data={this.state.pollType == "daily" && this.state.poll.isActive ? [] : _.orderBy(this.state.waifu.votes, ['vote'], ['desc'])}
-                    renderItem={({ item }) => <VoteRow vote={item} />}
+                    renderItem={({ item }) => <VoteRow vote={item} otherUsers={_.cloneDeep(this.state.otherUsers).concat(this.state.userInfo)} />}
                     keyExtractor={item => item.husbandoId}
                   />
                   
@@ -256,14 +257,6 @@ export default class VoteDetails extends Component {
             </Swiper>
           </View>
         </ImageBackground>
-        
-        <FAB
-          //small
-          color="white"
-          style={styles.fab}
-          icon="link-variant"
-          onPress={this.waifuLinkPress}
-        />
       </View>
     );
   }

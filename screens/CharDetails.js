@@ -3,6 +3,7 @@ import { Text, FAB, TextInput, Button, ActivityIndicator, Searchbar } from 'reac
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, TouchableHighlight,
    Image, ImageBackground, Dimensions, FlatList, Modal } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
+import NumericInput from 'react-native-numeric-input'
 
 import _ from 'lodash'
 const chroma = require('chroma-js')
@@ -26,7 +27,10 @@ export default class CharDetails extends Component {
       userInfo: store.getState().user.credentials,
       waifu: props.route.params.waifu,
       newImage: null,
+      atkStatUp: 0,
+      defStatUp: 0,
       showRankCoinConf: false,
+      showStatCoinModal: false,
       showUpdateImg: false,
     };
     
@@ -87,8 +91,13 @@ export default class CharDetails extends Component {
 
   useStatCoinFunc(){
     console.log("use stat coin")
-    // useRankCoin(this.state.waifu)
-    // this.setState({ showRankCoinConf: false})
+    var stats = {
+      attack: this.state.atkStatUp,
+      defense: this.state.defStatUp
+    }
+
+    useStatCoin(this.state.waifu, stats)
+    this.setState({ showStatCoinModal: false, atkStatUp: 0, defStatUp: 0})
   }
 
   updateImgText(text){
@@ -118,13 +127,13 @@ export default class CharDetails extends Component {
               >
                 {/* Stats List */}
                 <View style={{flex:1}}>
-
                   <View style={styles.statsView}>
                     <View style={styles.statsRow}>
                       <Text style={styles.statText}>ATK: {this.state.waifu.attack}</Text>
                       <Text style={styles.statText}>DEF: {this.state.waifu.defense}</Text>
                     </View>
                   </View>
+                  
                   <View style={styles.buttonRowView}>
                     <View style={styles.buttonItem}>
                       <Button onPress={() => this.setState({showRankCoinConf: true})}
@@ -132,14 +141,30 @@ export default class CharDetails extends Component {
                         mode={"contained"} color={chroma('aqua').hex()} 
                         labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                       >
-                        Use Rank Coin
+                        Upgrade Rank
                       </Button>
                     </View>
 
                     <View style={styles.buttonItem}>
-                      <Button disabled={true} mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}>Use Stat Coin</Button>
+                      <Button
+                        mode={"contained"}
+                        color={chroma('aqua').hex()}
+                        disabled={this.state.userInfo.statCoins <= 0}
+                        labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                        onPress={() => this.setState({showStatCoinModal: true})}
+                      >
+                        Upgrade Stats
+                      </Button>
                     </View>
                   </View>
+                          
+                  <FAB
+                    //small
+                    color="white"
+                    style={styles.imgUpdtFab}
+                    icon="image"
+                    onPress={() => this.setState({showUpdateImg: true})}
+                  />
                 </View>
               
                 {/* Details */}
@@ -150,22 +175,6 @@ export default class CharDetails extends Component {
             </View>
           </ImageBackground>
         </ImageBackground>
-
-        <FAB
-          //small
-          color="white"
-          style={styles.imgUpdtFab}
-          icon="image"
-          onPress={() => this.setState({showUpdateImg: true})}
-        />
-
-        <FAB
-          //small
-          color="white"
-          style={styles.fab}
-          icon="link-variant"
-          onPress={this.waifuLinkPress}
-        />
 
         {/* Rank Modal */}
         <Modal
@@ -200,6 +209,97 @@ export default class CharDetails extends Component {
                       Cancel
                   </Button>
                 </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      
+        {/* Stat Modal */}
+        <Modal
+          animationType="slide"
+          visible={this.state.showStatCoinModal}
+          onRequestClose={() => this.setState({showStatCoinModal: false, atkStatUp: 0, defStatUp: 0})}
+        >
+          <View style={{flex:1, width:width, marginTop: 22, justifyContent:"center", alignItems:"center"}}>
+            <View style={{height: 100, width: width, backgroundColor: chroma("white"), borderRadius: 25}}>
+              <View style={{flex:1, flexDirection:"row"}}>
+                <View style={{flex:1}}>
+                  <Text style={[styles.statText, {color:"black"} ]}>ATK</Text>
+                  <NumericInput value={this.state.atkStatUp}
+                    onChange={value => {
+                      this.setState({atkStatUp: value})
+                    }}
+                    rounded
+                    minValue={0}
+                    totalHeight={35}
+                    maxValue={this.state.userInfo.statCoins - this.state.defStatUp}
+                    leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                    rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                    separatorWidth={0}
+                    inputStyle={{
+                      fontFamily:"Edo",
+                      fontSize: 25,
+                    }}
+                    containerStyle={{
+                      width: '90%',
+                      justifyContent:"center",
+                      alignItems:"center",
+                      alignSelf:"center",
+                      backgroundColor: chroma('white').alpha(.5).hex(),
+                      borderWidth: 1,
+                      borderColor: chroma('black').alpha(.25).hex(),
+                    }}
+                  />
+                </View>
+                <View style={{flex:1}}>
+                  <Text style={[styles.statText, {color:"black"} ]}>DEF</Text>
+                  <NumericInput value={this.state.defStatUp}
+                    onChange={(value) => {
+                      this.setState({defStatUp: value})
+                    }}
+                    rounded
+                    minValue={0}
+                    maxValue={this.state.userInfo.statCoins - this.state.atkStatUp}
+                    totalHeight={35}
+                    leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                    rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                    separatorWidth={0}
+                    inputStyle={{ 
+                      fontFamily:"Edo",
+                      fontSize: 25,
+                    }}
+                    containerStyle={{
+                      width: '90%',
+                      justifyContent:"center",
+                      alignItems:"center",
+                      alignSelf:"center",
+                      backgroundColor: chroma('white').alpha(.5).hex(),
+                      borderWidth: 1,
+                      borderColor: chroma('black').alpha(.25).hex(),
+                    }}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.buttonRowView}>
+              <View style={styles.buttonItem}>
+                <Button onPress={this.useStatCoinFunc}
+                  disabled={this.state.atkStatUp == 0 && this.state.defStatUp == 0}
+                  mode={"contained"} color={chroma('aqua').hex()} 
+                  labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                >
+                  Confirm
+                </Button>
+              </View>
+
+              <View style={styles.buttonItem}>
+                <Button mode={"contained"}
+                  onPress={() => this.setState({showStatCoinModal: false, atkStatUp: 0, defStatUp: 0})}
+                  color={chroma('aqua').hex()}
+                  labelStyle={{fontSize: 20, fontFamily: "Edo"}}>
+                    Cancel
+                </Button>
               </View>
             </View>
           </View>

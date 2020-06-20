@@ -68,10 +68,6 @@ export default class SubmitCharacter extends Component {
     this._navFocusUnsubscribe();
     this._navBlurUnsubscribe();
   }
-
-  waifuLinkPress = async () => {
-    WebBrowser.openBrowserAsync(this.state.char.link);
-  };
   
   render(){
     return (
@@ -85,15 +81,17 @@ export default class SubmitCharacter extends Component {
                 removeClippedSubviews
                 showsPagination={false}
               >
-                {
-                  this.state.userInfo.submitSlots > 0 && !this.state.poll.isActive && !this.state.waifuList.map(x => x.link).includes(this.state.char.link) ?
-                    <View style={styles.buttonRowView}>
-                      <View style={styles.buttonItem}>
-                        <Button onPress={() => submitWaifu(this.state.char) } mode={"contained"} color={chroma('aqua').hex()} labelStyle={{height: 50, fontSize: 40, fontFamily: "Edo"}}>SUBMIT CHARACTER</Button>
+                <View style={styles.detailsView}>
+                  {
+                    this.state.userInfo.submitSlots > 0 && !this.state.poll.isActive && !this.state.waifuList.map(x => x.link).includes(this.state.char.link) ?
+                      <View style={styles.buttonRowView}>
+                        <View style={styles.buttonItem}>
+                          <Button onPress={() => submitWaifu(this.state.char) } mode={"contained"} color={chroma('aqua').hex()} labelStyle={{height: 50, fontSize: 40, fontFamily: "Edo"}}>SUBMIT CHARACTER</Button>
+                        </View>
                       </View>
-                    </View>
-                  : <></>
-                }
+                    : <></>
+                  }
+                </View>
               
                 {/* Details */}
                 <View style={styles.detailsView}>
@@ -103,14 +101,6 @@ export default class SubmitCharacter extends Component {
             </View>
           </ImageBackground>
         </ImageBackground>
-
-        <FAB
-          //small
-          color="white"
-          style={styles.fab}
-          icon="link-variant"
-          onPress={this.waifuLinkPress}
-        />
       </View>
     );
   }
@@ -177,7 +167,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 8,
     right: 0,
-    top: 0,
+    bottom: 4,
     backgroundColor: chroma('aqua').hex()
   },
 });

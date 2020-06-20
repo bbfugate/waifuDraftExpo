@@ -262,7 +262,6 @@ export default class BossFight extends Component {
         :
           <Swiper
             index={0}
-            loop
             showsPagination={false}
             style={{backgroundColor:"rgba(0,0,0,1)"}}
             onLayout={this._onLayoutDidChange}
@@ -426,7 +425,7 @@ export default class BossFight extends Component {
                     style={styles.backFab}
                     icon="arrow-left-thick"
                     onPress={() => this.handleSlideChange("back")}
-                  /> 
+                  />
                 </>
               }
             </View>

@@ -140,9 +140,9 @@ export default class Gauntlet extends Component {
                           justifyContent:"center", alignItems:"center"
                         }}
                       >
-                        <View style={{height: '50%', width: '50%'}}>
+                        <View style={{height: '100%', width: '100%'}}>
                           <ImageBackground style={[styles.imageContainer]}
-                            imageStyle={{resizeMode:"cover"}} source={{uri: boss.img}}/>
+                            imageStyle={{resizeMode:"contain"}} source={{uri: boss.img}}/>
                         </View>
                       </LinearGradient>
                       

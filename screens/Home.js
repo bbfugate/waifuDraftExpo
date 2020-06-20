@@ -1,10 +1,13 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
-import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Button, Image, ImageBackground, Dimensions } from 'react-native';
+import { Platform, StatusBar, Vibration, StyleSheet, View, TouchableOpacity, Button, Image, ImageBackground, Dimensions } from 'react-native';
 import { Text, TouchableRipple } from 'react-native-paper';
+
+import { Notifications } from 'expo';
+import * as Permissions from 'expo-permissions';
+import Constants from 'expo-constants';
 
 import _ from 'lodash'
 import Swiper from 'react-native-swiper'
-
 
 //Redux
 import store from '../redux/store';
@@ -361,6 +364,7 @@ const styles = StyleSheet.create({
     justifyContent:"center",
     alignItems: "center",
     position:"absolute",
+    bottom: 25,
     opacity: .85
   },
   topVote:{
