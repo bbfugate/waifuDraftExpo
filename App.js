@@ -41,7 +41,6 @@ require('./util/firebaseSetup')
 console.disableYellowBox = true;
 
 axios.defaults.baseURL = 'https://us-central1-waifudraftunlimited.cloudfunctions.net/api';
-//axios.defaults.baseURL = 'http://localhost:5000/';
 
 let Window = Dimensions.get('window');
 const styles = StyleSheet.create({
@@ -101,21 +100,7 @@ export default class App extends Component{
   onAuthStateChanged = (user) => {
     this.setState({isAuthenticationReady: true, authUser: user});
   }
-  // onAuthStateChanged = (authUser) => {
-  //   if(authUser != null){
-  //     console.log("Authenticate")
-  //     setAuthorizationHeader()
-  //   }
-  //   else{
-  //     console.log("Unauthenticate")
-  //     store.dispatch({ type: SET_UNAUTHENTICATED });
-  //     store.dispatch({ type: UNSUB_SNAPSHOTS });
-  //     store.dispatch({type: STOP_LOADING_UI })
-  //   }
 
-  //   this.setState({isAuthenticationReady: true, isAuthenticated: !!user});
-  // }
-  
   componentDidMount(){
     SplashScreen.preventAutoHideAsync();
     firebase.auth().onAuthStateChanged(this.onAuthStateChanged);
@@ -130,6 +115,7 @@ export default class App extends Component{
     const gif = require('./assets/images/splash.gif');
     return Asset.fromModule(gif).downloadAsync();
   };
+
   _cacheResourcesAsync = async () => {
     SplashScreen.hideAsync();
 
@@ -147,7 +133,7 @@ export default class App extends Component{
     
     this.setState({ isLoadingComplete: true });
   };
-  
+
   render(){
     if (!this.state.isLoadingComplete || !this.state.isAuthenticationReady) {
       return (
@@ -166,7 +152,6 @@ export default class App extends Component{
         <Router>
           <PaperProvider theme={CustomDefaultTheme}>
             <SafeAreaView style={styles.droidSafeArea}>
-              {/* <Layout authUser={this.state.authUser} authenticated={this.state.isAuthenticated} /> */}
               <Layout authUser={this.state.authUser} />
             </SafeAreaView>
           </PaperProvider>

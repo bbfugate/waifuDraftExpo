@@ -126,12 +126,21 @@ export default class OtherUserProfile extends Component {
   }
 
   startChat(){
-    var chat = {
-      users: [this.state.otherUser.userId, this.state.userInfo.userId],
-      messages: []
-    }
+    var chats = _.cloneDeep(store.getState().chat.chats);
+    var existChat = chats.filter(x => x.chatName == undefined && x.users.includes(this.state.otherUser.userId))
 
-    this.state.navigation.navigate("ViewChat", {chat})
+    if(_.isEmpty(existChat)){
+      var chat = {
+        users: [this.state.otherUser.userId, this.state.userInfo.userId],
+        messages: []
+      }
+  
+      this.state.navigation.navigate("ViewChat", {chat})
+    }
+    else{
+      existChat = existChat[0];
+      this.state.navigation.navigate("ViewChat", {chat: existChat})
+    }
   }
 
   render(){
@@ -178,7 +187,7 @@ export default class OtherUserProfile extends Component {
                 </View>
                 <FlatGrid
                   itemDimension={200}
-                  items={this.state.trades}
+                  items={_.cloneDeep(this.state.trades.filter(x => x.status == "Active")).concat(_.cloneDeep(this.state.trades.filter(x => x.status != "Active")))}
                   style={styles.gridView}
                   // staticDimension={300}
                   // fixed
@@ -193,6 +202,20 @@ export default class OtherUserProfile extends Component {
                         onPress={() => this.selectTrade(item)} 
                         style={[styles.itemContainer, {backgroundColor: index % 2 ? chroma('white').alpha(.75) : chroma('black').alpha(.75)}]}
                       >
+                        
+                        {
+                          item.status != "Active" ?
+                          <View style={{...StyleSheet.absoluteFillObject, zIndex: 20, elevation: 15, justifyContent:"center", alignItems:"center"}}>
+                            <Text style={[styles.text, 
+                            {
+                              fontSize:50, 
+                              color: item.status == "Accepted" ? chroma("green").brighten() :
+                                chroma('red').brighten()
+                            }]}>{item.status}</Text>
+                          </View>
+                          : <></>
+                        }
+
                         <View style={{flexDirection:"row", backgroundColor: chroma('white')}}>
                           <View style={{flex: 1}}>
                             <Text style={[styles.text]}>From</Text>

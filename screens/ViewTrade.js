@@ -34,7 +34,7 @@ export default class ViewTrade extends Component {
       navigation: props.navigation,
       trade: props.route.params.trade,
 			loading: store.getState().data.loading,
-      pollIsActive: store.getState().data.poll.weekly.isActive,
+      // pollIsActive: store.getState().data.poll.weekly.isActive,
       fromUser: users.filter(x => x.userId == props.route.params.trade.from.husbandoId)[0],
       toUser: users.filter(x => x.userId == props.route.params.trade.to.husbandoId)[0],
       userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
@@ -51,12 +51,12 @@ export default class ViewTrade extends Component {
     let userReducerWatch = watch(store.getState, 'user')
 
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
-      var trade = newVal.trades.filter(x => x.tradeId == this.state.trade.tradeId);
+      var trade = newVal.trades.filter(x => x.id == this.state.trade.id);
       
       if(!_.isEmpty(trade)){
         this.setState({
           trade: trade[0],
-          pollIsActive: newVal.poll.weekly.isActive,
+          // pollIsActive: newVal.poll.weekly.isActive,
         })
       }
       else{
@@ -73,14 +73,14 @@ export default class ViewTrade extends Component {
     }))
     
     var users = [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers);
-    var trade = store.getState().data.trades.filter(x => x.tradeId == this.state.trade.tradeId);
+    var trade = store.getState().data.trades.filter(x => x.id == this.state.trade.id);
     if(!_.isEmpty(trade)){
       this.setState({
         trade: trade[0],
         fromUser: users.filter(x => x.userId == this.state.trade.from.husbandoId)[0],
         toUser: users.filter(x => x.userId == this.state.trade.to.husbandoId)[0],
         userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
-        pollIsActive: store.getState().data.poll.weekly.isActive,
+        // pollIsActive: store.getState().data.poll.weekly.isActive,
       })
     }
     else{
@@ -131,6 +131,7 @@ export default class ViewTrade extends Component {
                     this.state.trade.from.points > 0 || this.state.trade.from.submitSlots > 0 ||
                       this.state.trade.from.rankCoins > 0 || this.state.trade.from.statCoins > 0 ?
                       <View style={styles.pointsView}>
+
                         {this.state.trade.from.points > 0 ?
                           <View style={styles.pointsReviewRow}>
                             <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={pointsIcon} />
@@ -155,6 +156,7 @@ export default class ViewTrade extends Component {
                             <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.from.statCoins}</Text>
                           </View>
                         :<></>}
+                        
                       </View>
                     : <></>
                   }
@@ -223,6 +225,8 @@ export default class ViewTrade extends Component {
                     this.state.trade.to.points > 0 || this.state.trade.to.submitSlots > 0 ||
                       this.state.trade.to.rankCoins > 0 || this.state.trade.to.statCoins > 0 ?
                       <View style={styles.pointsView}>
+                        <View style={{flex: 1}}/>
+
                         {this.state.trade.to.points > 0 ?
                           <View style={styles.pointsReviewRow}>
                             <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={pointsIcon} />
@@ -247,6 +251,8 @@ export default class ViewTrade extends Component {
                             <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.to.statCoins}</Text>
                           </View>
                         :<></>}
+                        
+                        <View style={{flex: 1}}/>
                       </View>
                     : <></>
                   }
@@ -309,7 +315,7 @@ export default class ViewTrade extends Component {
 
             {/* if curr user is To User - Reject/Accept */}
             { 
-              this.state.toUser.userId == this.state.userInfo.userId ?
+              this.state.toUser.userId == this.state.userInfo.userId && this.state.trade.status == "Active" ?
                 <View style={styles.buttonRowView}>
                   <View style={styles.buttonItem}>
                     <Button
@@ -324,7 +330,7 @@ export default class ViewTrade extends Component {
                   <View style={styles.buttonItem}>
                     <Button
                       onPress={() => this.updateTrade('Accepted')}
-                      disabled={ this.state.pollIsActive }
+                      // disabled={ this.state.pollIsActive }
                       mode={"contained"} color={chroma('aqua').hex()} 
                       labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                     >
@@ -338,7 +344,7 @@ export default class ViewTrade extends Component {
             
             {/* if curr user is To User - Reject/Accept */}
             { 
-              this.state.fromUser.userId == this.state.userInfo.userId ?
+              this.state.fromUser.userId == this.state.userInfo.userId && this.state.trade.status == "Active" ?
                 <View style={styles.buttonRowView}>
                   <View style={styles.buttonItem}>
                     <Button
@@ -447,7 +453,7 @@ const styles = StyleSheet.create({
     paddingTop: 10, paddingBottom: 10, paddingLeft: 10
   },
   pointsReviewRow:{
-    width:50,
+    width: 75,
     flexDirection: "row",
     alignItems:"center",
     justifyContent: "center"

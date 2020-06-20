@@ -14,6 +14,7 @@ import TabBarIcon from '../components/TabBarIcon';
 //Screens
 import ChatScreen from '../screens/Chat';
 import ViewChatScreen from '../screens/ViewChat';
+import NewChatScreen from '../screens/NewChat';
 
 import ProfileScreen from '../screens/Profile';
 
@@ -157,6 +158,7 @@ function ChatStackScreen() {
     >
       <ChatStack.Screen name="Chat" component={ChatScreen} />
       <ChatStack.Screen name="ViewChat" component={ViewChatScreen} />
+      <ChatStack.Screen name="NewChat" component={NewChatScreen} />
     </ChatStack.Navigator>
   );
 }
@@ -200,6 +202,7 @@ export default function BottomTabNavigator({ navigation, route }) {
             tabBarIcon: ({ focused }) => <TabBarIcon activeColor="white" focused={focused} name="exchange-alt" />,
           }}
         />
+        
         <BottomTab.Screen name="Home"
           component={HomeStackScreen}
           options={{
@@ -213,12 +216,13 @@ export default function BottomTabNavigator({ navigation, route }) {
             ,
           }}
         />
+        
         <BottomTab.Screen name="Shop"
           component={ShopStackScreen}
           options={{
             title: 'Shop',
-            tabBarColor: chroma('white').hex(),
-            tabBarIcon: ({ focused }) => <TabBarIcon activeColor="black" focused={focused} name="dollar-sign" />,
+            tabBarColor: chroma('green').brighten().hex(),
+            tabBarIcon: ({ focused }) => <TabBarIcon activeColor="white" focused={focused} name="dollar-sign" />,
           }}
         />
         <BottomTab.Screen name="Gauntlet"

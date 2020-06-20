@@ -1,6 +1,6 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Button, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
-import { Text, TouchableRipple } from 'react-native-paper';
+import { Text, FAB, TouchableRipple } from 'react-native-paper';
 import Swiper from 'react-native-swiper'
 
 import _ from 'lodash';
@@ -19,6 +19,13 @@ function Row({ item, index }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 8,
+    right: 0,
+    bottom: 4,
+    backgroundColor: chroma('aqua').hex()
   },
   text:{
     textAlign:"center",
@@ -79,6 +86,10 @@ const ComicCharDetails = ({ card }) => {
   const onLayout = (e) => {
     //setDetailViewHeight(e.nativeEvent.layout.height)
   }
+
+  const waifuLinkPress = async () => {
+    WebBrowser.openBrowserAsync(card.link);
+  };
 
   return(
     <View style={styles.container}>
@@ -154,6 +165,14 @@ const ComicCharDetails = ({ card }) => {
         }
 
       </Swiper> */}
+
+      <FAB
+        //small
+        color="white"
+        style={styles.fab}
+        icon="link-variant"
+        onPress={waifuLinkPress}
+      />
     </View>
   );
 }

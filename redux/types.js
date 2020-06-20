@@ -27,7 +27,8 @@ export const SET_TRADES = 'SET_TRADES';
 export const SET_GAUNTLET = 'SET_GAUNTLET';
 
 //Chat reducer types
-export const SET_MESSAGES = 'SET_MESSAGES';
+export const SET_CHATS = 'SET_CHATS';
+export const SET_LAST_VIEWED = 'SET_LAST_VIEWED';
 
 //listeners
 export const UNSUB_SNAPSHOTS = "UNSUB_SNAPSHOTS";

@@ -31,7 +31,7 @@ export default class Shop extends Component {
       navigation: props.navigation,
 			loading: store.getState().data.loading,
       userInfo: store.getState().user.credentials,
-      shop: store.getState().data.waifuList.filter(x => x.husbando == "Shop"),
+      shop: store.getState().data.waifuList.filter(x => x.husbandoId == "Shop"),
       size: {width,height}
     };
 
@@ -45,7 +45,7 @@ export default class Shop extends Component {
     let userReducerWatch = watch(store.getState, 'user')
 
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
-      var shop = newVal.waifuList.filter(x => x.husbando == "Shop");
+      var shop = newVal.waifuList.filter(x => x.husbandoId == "Shop");
 			this.setState({ shop })
     }))
 
@@ -53,7 +53,7 @@ export default class Shop extends Component {
       this.setState({ userInfo: newVal.credentials })
     }))
     
-    var shop = store.getState().data.waifuList.filter(x => x.husbando == "Shop");
+    var shop = store.getState().data.waifuList.filter(x => x.husbandoId == "Shop");
     this.setState({ shop, userInfo: store.getState().user.credentials })
   }
 

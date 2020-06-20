@@ -102,7 +102,7 @@ export default class BuyWaifu extends Component {
                   <View style={styles.buttonRowView}>
                     <View style={styles.buttonItem}>
                       <Button onPress={() => this.setState({showBuyConf: true})}
-                        disabled={this.state.waifu.rank * 5 > this.state.userInfo.points || this.state.waifu.husbando != "Shop"}
+                        disabled={this.state.waifu.rank * 5 > this.state.userInfo.points || this.state.waifu.husbandoId != "Shop"}
                         mode={"contained"} color={chroma('aqua').hex()} 
                         labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                       >

@@ -2,6 +2,10 @@ import _ from 'lodash';
 import React, { Component, createRef, forwardRef } from 'react';
 import { Platform, StatusBar, StyleSheet, View, Image, Dimensions, SafeAreaView} from 'react-native';
 
+import { Notifications } from 'expo';
+import * as Permissions from 'expo-permissions';
+import Constants from 'expo-constants';
+
 import {
   LOADING_UI,
   STOP_LOADING_UI,
@@ -68,7 +72,7 @@ const styles = StyleSheet.create({
 		height: height,
 		justifyContent:"center",
 		alignItems:"center",
-		backgroundColor: "rgba(0,0,0,.75)",
+		backgroundColor: "rgba(0,0,0,.15)",
 		position: "absolute",
 		zIndex: 10
 	}
@@ -101,6 +105,8 @@ class Layout extends Component {
 		if(props.authUser != null){
 			setAuthorizationHeader()
 			setRealTimeListeners(props.authUser.uid)
+			this.registerForPushNotificationsAsync(props.authUser.uid);
+			// this._notificationSubscription = Notifications.addListener(this._handleNotification);
 		}
 		this.setState({...props})
 		
@@ -116,6 +122,45 @@ class Layout extends Component {
 		this.uiUnsubscribe()
 	}
 
+  registerForPushNotificationsAsync = async (userId) => {
+		const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+		let finalStatus = existingStatus;
+		if (existingStatus !== 'granted') {
+			const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+			finalStatus = status;
+		}
+
+		if (finalStatus !== 'granted') {
+			console.log('Failed to get push token for push notification!');
+			return;
+		}
+		
+		token = await Notifications.getExpoPushTokenAsync();
+		await firebase.firestore().doc(`users/${userId}`).get()
+		.then((userRef) => {
+			var user = userRef.data();
+
+			if(user.token == undefined || user.token != token){ //add user token or update it if is different
+				userRef.ref.update({token})
+			}
+		})
+
+		if (Platform.OS === 'android') {
+			Notifications.createChannelAndroidAsync('default', {
+				name: 'default',
+				sound: true,
+				priority: 'max',
+				vibrate: [0, 250, 250, 250],
+			});
+		}
+  };
+
+  // _handleNotification = notification => {
+  //   Vibration.vibrate();
+  //   console.log(notification);
+  //   this.setState({ notification: notification });
+	// };
+	
 	render() {
 		return (
 			<View style={styles.container}>

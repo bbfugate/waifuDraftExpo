@@ -1,6 +1,6 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
-import { Text, TouchableRipple, Card, Button } from 'react-native-paper';
+import { Text, FAB, TouchableRipple, Card, Button, Badge } from 'react-native-paper';
 
 import _ from 'lodash'
 
@@ -11,15 +11,52 @@ import watch from 'redux-watch'
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
 
-function Row({ item, index }) {
+function Row({ item, index, selectChat }){
+  const chatName = item.name ?? null;
+  const chatImg = item.img ?? null;
+  const isGroupChat = item.name != null;
+
+  var user = store.getState().user.credentials;
+  var otherUserId = item.users.filter(x => x != user.userId)[0];
+  var otherUser = store.getState().user.otherUsers.filter(x => x.userId == otherUserId)[0];
+
   var styleRow = index % 2 == 0 ? styles.rowEven : styles.rowOdd;
+  var textColor = index % 2 == 0 ? "black" : "white";
+
+  var newMessageCount = 0;
+  if(item.lastViewed != undefined)
+    newMessageCount = item.messages.filter(x => new Date(x.createdAt) > new Date(item.lastViewed)).length
 
   return (
-    <View style={[styleRow, {flex: 1}]}>
-      <Text style={[styles.text, {fontSize: 25}]}>{item.id}</Text>
-    </View>
+    <TouchableOpacity activeOpacity={.5} style={styleRow} onPress={() => selectChat(item)}>
+      <ImageBackground source={{uri: chatImg ?? otherUser.img}}
+       style={{height: 150, flexDirection:"row"}}
+       imageStyle={{opacity: .25}}
+       blurRadius={1}
+       resizeMode="cover"
+      >
+        <View style={{width: 100, alignItems:"center", justifyContent:"center"}}>
+          <View style={[styles.profileImg]}>
+            <Image source={{uri: chatImg ?? otherUser.img}} style={[styles.profileImg]} />
+          </View>
+        </View>
+        <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
+          <Text style={[styles.text, {fontSize: 35, color: textColor}]}>{ chatName ?? otherUser.userName}</Text>
+        </View>
+        <View style={{width: 75, alignItems:"center", justifyContent:"center"}}>
+          <Text style={[styles.text, {fontSize: 25, color: textColor}]}>{item.messages.length}</Text>
+          { newMessageCount > 0 ?
+              <View style={{ position: "absolute", top: 0, right: 0, margin:8}}>
+                <Badge>{newMessageCount}</Badge>
+              </View>
+            : <></>
+          }
+        </View>
+      </ImageBackground>
+    </TouchableOpacity>
   );
 }
+
 export default class Chat extends Component {
   constructor(props) {
     super();
@@ -34,6 +71,7 @@ export default class Chat extends Component {
     };
 
     this.selectChat = this.selectChat.bind(this)
+    this.startNewChat = this.startNewChat.bind(this)
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
   }
@@ -78,21 +116,33 @@ export default class Chat extends Component {
     this.state.navigation.navigate("ViewChat", {chat})
   }
 
+  startNewChat(){
+    this.state.navigation.navigate("NewChat")
+  }
+
   render(){
     return (
       <>
         {this.state.loading ?
           <></>
         :
-          <View style={styles.waifuListView}>
+          <View style={styles.container}>
             <View style={{width: width, height: 50, backgroundColor: chroma('white')}}>
               <Text style={styles.text}>CHATS</Text>
             </View>
             
             <FlatList
-              data={this.state.chats}
-              renderItem={({ item, index }) => <Row item={item} index={index} />}
-              keyExtractor={item => item.id}
+              data={_.orderBy(this.state.chats, "modifiedDate", "desc")}
+              renderItem={({ item, index }) => <Row item={item} index={index} selectChat={this.selectChat} />}
+              keyExtractor={item => item.chatId}
+            />
+            
+            <FAB
+              //small
+              color="white"
+              style={styles.fab}
+              icon="message-text-outline"
+              onPress={this.startNewChat}
             />
           </View>
         }
@@ -108,17 +158,19 @@ Chat.navigationOptions = {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: "column",
-    alignItems:"center",
-    justifyContent: "center",
-    backgroundColor: chroma('white').alpha(.75),
+    width: width,
+    backgroundColor: chroma('black').alpha(.5),
+  },
+  rowOdd:{
+    backgroundColor: chroma('black').alpha(.75),
+  },
+  rowEven:{
+    backgroundColor: chroma('white').alpha(.85),
   },
   profileImg:{
-    height: width/2.25,
-    width: width/2.25,
-    marginTop: 5,
-    marginBottom: 5,
-    borderRadius: width/2,
+    height: 75,
+    width: 75,
+    borderRadius: 75,
     resizeMode: "cover",
     overflow: "hidden",
     shadowColor: '#000',
@@ -126,93 +178,17 @@ const styles = StyleSheet.create({
     elevation: 10,
     alignItems:"center",
     justifyContent:"center",
-  },
-  tradeUserImg:{
-    height: width/3,
-    width: width/3,
-    marginTop: 5,
-    marginBottom: 5,
-    borderRadius: width/3,
-    resizeMode: "cover",
-    overflow: "hidden",
-    shadowColor: '#000',
-    shadowOpacity: 1,
-    elevation: 10,
-    alignItems:"center",
-    justifyContent:"center",
-  },
-  userInfoView:{
-    flex: 1,
-    width: width,
-    shadowColor: '#000',
-    shadowOpacity: 1,
-    elevation: 2,
-  },
-  userInfo: {
-    flex: 1,
-    width: width,
-    overflow: "hidden",
-    shadowColor: '#000',
-    shadowOpacity: 1,
-    elevation: 1,
-    backgroundColor: chroma('white').alpha(.85),
-    alignItems:"center",
-    justifyContent:"center"
-  },
-  userStatsView:{
-    flex: 3,
-    padding: 10,
-    width: width,
-    backgroundColor: chroma('black').alpha(.025),
   },
   text:{
     fontFamily: "Edo",
     fontSize: 35,
     textAlign: "center"
   },
-  titleView:{
-    flex: 1,
-    position: "absolute",
-    bottom: 0,
+  fab: {
+    position: 'absolute',
+    margin: 8,
+    right: 0,
+    bottom: 4,
+    backgroundColor: chroma('aqua').hex()
   },
-  waifuListView:{
-    flex:1,
-    width: width,
-    backgroundColor: chroma('gray').alpha(.75),
-  },
-  gridView: {
-    flex: 1,
-  },
-  itemContainer: {
-    justifyContent: 'flex-end',
-    borderRadius: 10,
-    // padding: 10,
-    height: 250,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 1,
-    elevation: 10
-  },
-  statView:{
-    flex:1, flexDirection: "row",
-    backgroundColor: chroma('black').alpha(.45),
-    position: "absolute", top: 0, zIndex: 2,
-    paddingTop: 10, paddingBottom: 10, paddingLeft: 10
-  },
-  statRow:{
-    flex:1,
-    flexDirection: "row",
-    alignItems:"center",
-    justifyContent: "center"
-  },
-  statImg: {
-    height: 25,
-    width: 25,
-  },
-  statsText:{
-    flex:1,
-    fontFamily:"Edo",
-    fontSize:25,
-    marginLeft: 5
-  }
 })
