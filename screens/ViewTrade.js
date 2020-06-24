@@ -114,6 +114,18 @@ export default class ViewTrade extends Component {
   }
 
   render(){
+    var canAccept = false;
+    const trade = this.state.trade;
+
+    const fromWaifus = trade.from.waifus ?? [];
+    const toWaifus = trade.to.waifus ?? [];
+		if(trade.from.points <= this.state.fromUser.points && trade.from.submitSlots <= this.state.fromUser.submitSlots &&
+			trade.to.points <= this.state.toUser.points && trade.to.submitSlots <= this.state.toUser.submitSlots){
+				var tt = _.difference(fromWaifus.map(x => x.waifuId), this.state.fromUser.waifus.map(x => x.waifuId)).length;
+				var te = _.difference(toWaifus.map(x => x.waifuId), this.state.toUser.waifus.map(x => x.waifuId)).length;
+				canAccept = tt == 0 && te == 0;
+    }
+    
     return (
       <>
         {this.state.loading ?
@@ -330,7 +342,7 @@ export default class ViewTrade extends Component {
                   <View style={styles.buttonItem}>
                     <Button
                       onPress={() => this.updateTrade('Accepted')}
-                      // disabled={ this.state.pollIsActive }
+                      disabled={ this.state.pollIsActive }
                       mode={"contained"} color={chroma('aqua').hex()} 
                       labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                     >

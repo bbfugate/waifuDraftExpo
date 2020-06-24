@@ -38,7 +38,7 @@ export default class SnackBar extends React.Component {
           alertColor = "#59EE87"
           break;
         case "warning":
-          alertColor = "#F2E043"
+          alertColor = chroma("#F2E043").darken(.25)
           break;
         case "error":
           alertColor = "#F73A27"

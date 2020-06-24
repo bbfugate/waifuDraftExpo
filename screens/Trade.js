@@ -75,11 +75,9 @@ export default class Trade extends Component {
         <View style={styles.slide}>
           <View style={styles.SeriesListView}>
             <FlatGrid
-              itemDimension={200}
+              itemDimension={150}
               items={this.state.otherUsers}
               style={styles.gridView}
-              // staticDimension={300}
-              // fixed
               spacing={20}
               renderItem={({item, index}) => {
                 return(

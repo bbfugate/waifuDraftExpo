@@ -19,6 +19,8 @@ import bossDefeatedIcon from '../assets/images/bossDefeated.png'
 import bossVSIcon from '../assets/images/bossVsIcon.png'
 import bossHpIcon from '../assets/images/bossHpIcon.png'
 import bossFightGif from '../assets/images/bossFight.gif'
+import bossFightVSBgGif from '../assets/images/Boss-Fight-VS-BG.gif'
+import bossFightVSEffectGif from '../assets/images/Boss-Fight-VS-Effect.gif'
 
 //Redux
 import store from '../redux/store';
@@ -44,11 +46,10 @@ export default class BossFight extends Component {
     this.mounted = true;
     
     var fights = _.cloneDeep(props.route.params.boss.fights);
-    var userFightRec = fights.filter(x => x.husbandoId == store.getState().user.credentials.userId)
-
     this.state = {
       navigation: props.navigation,
       boss: props.route.params.boss,
+      bosses: store.getState().data.bosses,
 			loading: store.getState().data.loading,
       userInfo: {...store.getState().user.credentials, waifus: _.orderBy(store.getState().user.waifus, ['rank'], ['desc']) },
       selectedWaifu: null,
@@ -59,7 +60,6 @@ export default class BossFight extends Component {
       rewardResult: "",
       rolls: [],
       totalDmg: 0,
-      userFightRec: _.isEmpty(userFightRec) ? null : userFightRec[0],
       size: { width, height },
     };
 
@@ -76,10 +76,7 @@ export default class BossFight extends Component {
     
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
       var boss = newVal.bosses.filter(x => x.bossId == this.state.boss.bossId)[0]
-      var userFightRec = _.cloneDeep(boss.fights).filter(x => x.husbandoId == this.state.userInfo.userId);
-      userFightRec = _.isEmpty(userFightRec) ? null : userFightRec[0];
-
-      this.setState({ bosses: newVal.bosses, userFightRec })
+      this.setState({ bosses: newVal.bosses, boss })
     }))
 
     store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
@@ -88,12 +85,10 @@ export default class BossFight extends Component {
 
     var bosses = _.cloneDeep(store.getState().data.bosses);
     var boss = bosses.filter(x => x.bossId == this.state.boss.bossId)[0];
-    var userFightRec = boss.fights.filter(x => x.husbandoId == this.state.userInfo.userId);
-    userFightRec = _.isEmpty(userFightRec) ? null : userFightRec[0];
 
     this.setState({
       boss,
-      userFightRec
+      bosses,
     })
   }
 
@@ -156,19 +151,27 @@ export default class BossFight extends Component {
   }
 
   selectWaifu(waifu){
-    if(this.state.userFightRec != null){
-      if(this.state.userFightRec.defeated){
+    var selBossFight = this.state.boss.fights.filter(x => x.husbandoId == this.state.userInfo.userId)
+    var userFights = this.state.bosses.flatMap(x => x.fights).filter(x => x.husbandoId == this.state.userInfo.userId)
+
+    if(!_.isEmpty(selBossFight)){
+      selBossFight = selBossFight[0];
+      if(selBossFight.defeated){
         store.dispatch({
           type: SET_SNACKBAR,
           payload: { type: "Warning", message: "You've already defeated this boss" }
         });
         return
       }
+    }
 
-      if(this.state.userFightRec.waifusUsed.includes(waifu.waifuId)){
+    if(userFights.length > 0){ //has fought a boss check if this waifu has already been used
+      userFights = userFights.flatMap(x => x.waifusUsed)
+      var hasFought = userFights.includes(waifu.waifuId)
+      if(hasFought){
         store.dispatch({
           type: SET_SNACKBAR,
-          payload: { type: "Warning", message: "Waifu Already Used To Fight This Boss" }
+          payload: { type: "Warning", message: "Waifu Has Already Fought A Boss." }
         });
         return
       }
@@ -255,6 +258,13 @@ export default class BossFight extends Component {
   };
 
   render(){
+    var waifuGroups = _.chain(_.cloneDeep(this.state.userInfo.waifus))
+    .groupBy(waifu => Number(waifu.rank))
+    .map((waifus, rank) => ({ rank: Number(rank), waifus }))
+    .orderBy(group => Number(group.rank), ['desc'])
+    .value()
+
+    const waifus = waifuGroups.flatMap(x => x.waifus)
     return (
       <>
         {this.state.loading ?
@@ -275,7 +285,7 @@ export default class BossFight extends Component {
               </View>
               <FlatGrid
                 itemDimension={150}
-                items={this.state.userInfo.waifus}
+                items={waifus}
                 style={styles.gridView}
                 spacing={20}
                 renderItem={({item, index}) => {
@@ -331,12 +341,23 @@ export default class BossFight extends Component {
                 <></>
               :
                 <>
-                  <Image source={bossVSIcon} style={{height:150, width:150,
-                    position: "absolute",
-                    left: this.state.size.width/2 - 75,
-                    top: (this.state.size.height/2) - 65,
-                    zIndex: 5}}
+                  <Image source={bossVSIcon} 
+                    style={{
+                      height:150,
+                      width:150,
+                      position: "absolute",
+                      left: this.state.size.width/2 - 75,
+                      top: (this.state.size.height/2) - 65,
+                      zIndex: 5
+                    }}
                   />
+                  <Image source={bossFightVSEffectGif} resizeMode={"cover"}
+                    style={{
+                      ...StyleSheet.absoluteFillObject,
+                      left: this.state.size.width/2 - 200,
+                      top: (this.state.size.height/2) - 200,
+                      height: 400, width: 400, zIndex:6
+                    }}/>
                   
                   {/* Waifu Image */}
                   <MaskedView
@@ -347,26 +368,27 @@ export default class BossFight extends Component {
                   >
                     <ImageBackground blurRadius={1} style={[styles.imageContainer]}
                       imageStyle={{resizeMode:"cover"}} source={{uri: this.state.selectedWaifu.img}}>
-                        
                       <LinearGradient
-                        colors={[chroma(this.state.waifuRankColor).alpha(.5), chroma(this.state.waifuRankColor).alpha(.75), chroma(this.state.waifuRankColor)]}
+                        colors={[chroma(this.state.waifuRankColor).alpha(.25), chroma(this.state.waifuRankColor).alpha(.5), chroma(this.state.waifuRankColor).alpha(.75)]}
                         style={{
                           ...StyleSheet.absoluteFillObject,
                           zIndex:0,
-                          justifyContent:"center", alignItems:"center"
+                          justifyContent:"center", alignItems:"center",
+                          backgroundColor: chroma('black').alpha(.25)
                         }}
                       >
-                        <View style={{height: '40%', width: '45%', position:"absolute", left:10, top: 10}}>
+                        <Image source={bossFightVSBgGif} resizeMode={"cover"} style={{...StyleSheet.absoluteFillObject, height: this.state.size.height, width: width, zIndex:1}}/>
+                        <View style={{height: '40%', width: '45%', position:"absolute", left:10, top: 10, zIndex:2}}>
                           <ImageBackground style={[styles.imageContainer, {borderRadius: 10}]}
                             imageStyle={{resizeMode:"cover"}} source={{uri: this.state.selectedWaifu.img}}>
                             <>
                               <View style={[styles.statRow, {position:"absolute", left:10, top: 10}]}>
-                                <Image style={[styles.statImg, {tintColor: 'white', height: 50, width:50}]} source={atkIcon} />
-                                <Text style={[ styles.statsText, {color: 'white', fontSize: 50}]}>{this.state.selectedWaifu.attack}</Text>
+                                <Image style={[styles.statImg, {tintColor: chroma(this.state.waifuRankColor), height: 50, width:50}]} source={atkIcon} />
+                                <Text style={[ styles.statsText, {color: chroma(this.state.waifuRankColor), fontSize: 50}]}>{this.state.selectedWaifu.attack}</Text>
                               </View>
                               <View style={[styles.statRow, {position:"absolute", left:10, top: 75}]}>
-                                <Image style={[styles.statImg, {tintColor: 'white', height: 50, width:50}]} source={defIcon} />
-                                <Text style={[ styles.statsText, {color: 'white', fontSize: 50}]}>{this.state.selectedWaifu.defense}</Text>
+                                <Image style={[styles.statImg, {tintColor: chroma(this.state.waifuRankColor), height: 50, width:50}]} source={defIcon} />
+                                <Text style={[ styles.statsText, {color: chroma(this.state.waifuRankColor), fontSize: 50}]}>{this.state.selectedWaifu.defense}</Text>
                               </View>
                             </>
                           </ImageBackground>
@@ -386,14 +408,17 @@ export default class BossFight extends Component {
                       imageStyle={{resizeMode:"cover"}} source={{uri: this.state.boss.img}}>
                         
                       <LinearGradient
-                        colors={['rgba(252,177,0,0.5)', 'rgba(255,149,0,0.75)', 'rgba(255,149,0,1)']}
+                        colors={['rgba(252,177,0,0.25)', 'rgba(255,149,0,0.5)', 'rgba(255,149,0,.75)']}
                         style={{
                           ...StyleSheet.absoluteFillObject,
                           zIndex:0,
-                          justifyContent:"center", alignItems:"center"
+                          justifyContent:"center", alignItems:"center",
+                          backgroundColor: chroma('black').alpha(.25)
                         }}
                       >
-                        <View style={{height: '40%', width: '45%', position:"absolute", right:10, bottom: 10}}>
+                        <Image source={bossFightVSBgGif} resizeMode={"cover"} style={{...StyleSheet.absoluteFillObject, height: this.state.size.height, width: width, zIndex:1}}/>
+                      
+                        <View style={{height: '40%', width: '45%', position:"absolute", right:10, bottom: 10, zIndex:2}}>
                           <ImageBackground style={[styles.imageContainer, {borderRadius: 10}]}
                             imageStyle={{resizeMode:"cover"}} source={{uri: this.state.boss.img}}>
                             <View style={[styles.statRow, {position:"absolute", zIndex:10, left:10, top: 10}]}>
@@ -435,7 +460,6 @@ export default class BossFight extends Component {
                 !this.state.fightCompleted ? <></>
               :
                 <View style={{flex: 1, width: width}}>
-                  
                   <Image source={bossFightGif} resizeMode={"cover"} style={{...StyleSheet.absoluteFillObject, height: this.state.size.height, width: width, zIndex:5}}/>
 
                   {/* Rolls */}
@@ -623,7 +647,7 @@ const styles = StyleSheet.create({
     justifyContent: "center"
   },
   statsText:{
-    flex:1,
+    width:'auto',
     fontFamily:"Edo",
     fontSize:25,
   },

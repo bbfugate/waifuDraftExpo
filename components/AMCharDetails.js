@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     marginBottom: 5
   },
   nameView:{
-    height: 75,
+    height: 'auto',
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,.75)",
@@ -126,7 +126,7 @@ const AMCharDetails = ({ card }) => {
           </View> */}
 
           {/* Appearances */}
-          <View style={{height: detailViewHeight - 75}}>
+          <View style={{flex: 1}}>
             <View style={{flex:1}}>
               <View style={styles.titleView}>
                 <Text style={[styles.text, styles.titleShadow,{fontSize: 40, color:"white"}]}>Animes</Text>

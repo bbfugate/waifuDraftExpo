@@ -1,15 +1,12 @@
 import _ from 'lodash';
 import React, { Component, createRef, forwardRef } from 'react';
-import { Platform, StatusBar, StyleSheet, View, Image, Dimensions, SafeAreaView} from 'react-native';
-
-import { Notifications } from 'expo';
-import * as Permissions from 'expo-permissions';
-import Constants from 'expo-constants';
+import { Platform, StatusBar, StyleSheet, View, Image, Dimensions, SafeAreaView, AppState} from 'react-native';
 
 import {
   LOADING_UI,
   STOP_LOADING_UI,
 	SET_USER,
+	UNSUB_SNAPSHOTS,
 	SET_SNACKBAR
 } from '../redux/types';
 
@@ -20,9 +17,13 @@ import { Text, TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import Toast from '../components/Toast'
 
 //Expo
+import { Notifications } from 'expo';
 import { Video } from 'expo-av';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
+import * as Updates from 'expo-updates';
+import * as Permissions from 'expo-permissions';
+import Constants from 'expo-constants';
 
 //Navigation
 import BottomTabNavigator from '../navigation/BottomTabNavigator'
@@ -84,21 +85,72 @@ class Layout extends Component {
 		super(props);
 		this.state = {
 			loading: store.getState().UI.loading,
-			authUser: props.authUser
+			authUser: props.authUser,
+			appState: AppState.currentState
 		};
-
-		let uiReducerWatch = watch(store.getState, 'UI')
-		this.uiUnsubscribe = store.subscribe(uiReducerWatch((newVal, oldVal, objectPath) => {
-			this.setState({ ...newVal })
-		}))
 
 		this.startListeners = _.debounce(this.startListeners, 500)
 	}
 
+  _handleAppStateChange = async (nextAppState) => {
+    if ((this.state.appState.match(/inactive|background/) && nextAppState === 'active') || (this.state.appState == "active" && nextAppState == undefined)) {
+			this.startListeners(this.state)
+	
+			let uiReducerWatch = watch(store.getState, 'UI')
+			this.uiUnsubscribe = store.subscribe(uiReducerWatch((newVal, oldVal, objectPath) => {
+				this.setState({ ...newVal })
+			}))
+
+			try {
+				const update = await Updates.checkForUpdateAsync();
+				if (update.isAvailable) {
+					await Updates.fetchUpdateAsync();
+	
+					store.dispatch({
+						type: SET_SNACKBAR,
+						payload: { type: "success", message: "New Update Avalible. Applying..." }
+					});
+	
+					//... notify user of update...
+					this.setState(async () => {
+						await Updates.reloadAsync();
+					}, 1000)
+				}
+				else{
+					console.log("No Update")
+				}
+			}
+			catch (e) {
+				// handle or log error
+				store.dispatch({
+					type: SET_SNACKBAR,
+					payload: { type: "error", message: "Error Applying Update" }
+				});
+			}
+
+		}
+		else{
+			store.dispatch({ type: UNSUB_SNAPSHOTS });
+
+			if(this.uiUnsubscribe != null){
+				this.uiUnsubscribe()
+			}
+		}
+
+    this.setState({appState: nextAppState});
+	}
+	
 	async componentDidMount() {
-		this.startListeners(this.state)
+		AppState.addEventListener('change', this._handleAppStateChange);
+		
+		this._handleAppStateChange();
 	}
 
+  componentWillUnmount(){
+    AppState.addEventListener('change', this._handleAppStateChange);
+    this.mounted = false;
+	}
+	
 	startListeners = (props) => {
 		store.dispatch({type: LOADING_UI})
 		
@@ -118,39 +170,52 @@ class Layout extends Component {
 			this.startListeners(props)
 	}
 
-	componentWillUnmount(){
-		this.uiUnsubscribe()
-	}
-
   registerForPushNotificationsAsync = async (userId) => {
-		const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
-		let finalStatus = existingStatus;
-		if (existingStatus !== 'granted') {
-			const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-			finalStatus = status;
-		}
+		try{
+			const { status: existingStatus } = await Permissions.getAsync(Permissions.NOTIFICATIONS);
+			let finalStatus = existingStatus;
 
-		if (finalStatus !== 'granted') {
-			console.log('Failed to get push token for push notification!');
-			return;
-		}
-		
-		token = await Notifications.getExpoPushTokenAsync();
-		await firebase.firestore().doc(`users/${userId}`).get()
-		.then((userRef) => {
-			var user = userRef.data();
-
-			if(user.token == undefined || user.token != token){ //add user token or update it if is different
-				userRef.ref.update({token})
+			if (existingStatus !== 'granted') {
+				const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+				
+				store.dispatch({type: SET_SNACKBAR, payload: {type:"warning", message: status}});
+				finalStatus = status;
 			}
-		})
 
-		if (Platform.OS === 'android') {
-			Notifications.createChannelAndroidAsync('default', {
-				name: 'default',
-				sound: true,
-				priority: 'max',
-				vibrate: [0, 250, 250, 250],
+			if (finalStatus !== 'granted') {
+				console.log('Failed to get push token for push notification!');
+				return;
+			}
+			
+			token = await Notifications.getExpoPushTokenAsync();
+			
+			store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: token}});
+			await firebase.firestore().doc(`users/${userId}`).get()
+			.then((userRef) => {
+				var user = userRef.data();
+				
+				if(user.token == undefined || user.token != token){ //add user token or update it if is different
+					userRef.ref.update({token})
+				}
+			})
+			.catch((err) => {
+				store.dispatch({type: SET_SNACKBAR, payload: {type:"error", message: "cant set token"}});
+			})
+
+			if (Platform.OS === 'android') {
+				Notifications.createChannelAndroidAsync('default', {
+					name: 'default',
+					sound: true,
+					priority: 'max',
+					vibrate: [0, 250, 250, 250],
+				});
+			}
+		}
+		catch(err){
+			store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: "Error getting permissions"}});
+			await firebase.firestore().collection("logs").add({log: err, timestamp: new Date()})
+			.catch((err) => {
+				store.dispatch({type: SET_SNACKBAR, payload: {type:"error", message: "Error adding error log"}});
 			});
 		}
   };
@@ -170,7 +235,6 @@ class Layout extends Component {
 					</View>
 				: <></>
 				}
-
 
 				<>
 					{this.state.authUser == null ? 

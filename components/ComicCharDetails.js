@@ -40,6 +40,7 @@ const styles = StyleSheet.create({
     marginBottom: 5
   },
   nameView:{
+    height:'auto',
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,.75)",

@@ -142,9 +142,8 @@ export default class SearchSeries extends Component {
                   return(
                     <View style={{flex:1, position:"relative", marginTop: 10}}>
 
-                      <View style={{height:10, width:10, position:"absolute", elevation: 6, zIndex:2, top:-5,right:-5, backgroundColor:"red"}} >
-
-                      </View>
+                      {/* <View style={{height:10, width:10, position:"absolute", elevation: 6, zIndex:2, top:-5,right:-5, backgroundColor:"red"}}/>*/}
+                      
                       <TouchableOpacity activeOpacity={.25} onPress={() => this.selectCharacter(item)} style={[styles.itemContainer]}>
                         <Image
                           style={{
@@ -218,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     borderRadius: 10,
     // padding: 10,
-    height: 125,
+    height: 175,
     overflow: "hidden",
     shadowColor: '#000',
     shadowOpacity: 1,

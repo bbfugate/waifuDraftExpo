@@ -108,7 +108,7 @@ export default class App extends Component{
 
   componentWillUnmount(){
     this.userUnsubscribe()
-    store.dispatch({ type: UNSUB_SNAPSHOTS });
+    // store.dispatch({ type: UNSUB_SNAPSHOTS });
   }
 
   _cacheSplashResourcesAsync = async () => {
@@ -121,8 +121,6 @@ export default class App extends Component{
 
     Promise.all([
       Asset.loadAsync([
-        require('./assets/videos/DCBg.mp4'),
-        require('./assets/videos/MarvelBg.mp4'),
         require('./assets/images/TopVote.png'),
       ]),
       Font.loadAsync({

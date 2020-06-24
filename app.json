@@ -7,7 +7,7 @@
       "android",
       "web"
     ],
-    "version": "1.0.1",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/images/AppIcon.png",
     "scheme": "myapp",
@@ -24,12 +24,13 @@
     ],
     "ios": {
       "bundleIdentifier": "com.waifu.draft",
-      "buildNumber": "0.0.2",
+      "buildNumber": "0.0.5",
       "supportsTablet": true
     },
     "android": {
       "package": "com.waifu.draft",
-      "versionCode": 2
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 5
     }, 
     "web": {
       "favicon": "./assets/images/favicon.png"

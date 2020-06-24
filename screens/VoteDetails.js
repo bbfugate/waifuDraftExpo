@@ -31,8 +31,9 @@ function VoteRow({ vote, pollType, isActive, otherUsers }) {
 
       {
         pollType == "daily" && isActive ?
+          <></>
+        :
           <Text style={styles.voteRowVoteCount}>{vote.vote}</Text>
-        : <></>
       }
     </View>
   );

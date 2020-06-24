@@ -193,7 +193,8 @@ export default class Home extends Component {
 
   render(){
     return (
-      <>
+      <View style={{flex: 1, position:"relative"}}>
+        
         {this.state.loading ?
           <></>
         :
@@ -298,7 +299,7 @@ export default class Home extends Component {
             </View>
           </Swiper>
         }
-      </>
+      </View>
     );
   }
 }

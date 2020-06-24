@@ -17,7 +17,10 @@ import statCoinIcon from '../assets/images/statCoinIcon.png'
 
 //Redux
 import store from '../redux/store';
-import watch from 'redux-watch'
+import watch from 'redux-watch';
+import {
+  SET_SNACKBAR,
+} from '../redux/types';
 
 //Component
 import RankBackground from '../components/RankBackGround'
@@ -29,6 +32,7 @@ const { width, height } = Dimensions.get('window');
 export default class NewTrade extends Component {
   constructor(props) {
     super();
+
     this.mounted = true;
     this.state = {
       navigation: props.navigation,
@@ -60,7 +64,6 @@ export default class NewTrade extends Component {
 
     this.handleSlideChange = this.handleSlideChange.bind(this)
     this.selectWaifu = this.selectWaifu.bind(this)
-
     this.submitTrade = this.submitTrade.bind(this)
   }
   
@@ -96,6 +99,11 @@ export default class NewTrade extends Component {
   componentDidMount(){
     this._navFocusUnsubscribe = this.state.navigation.addListener('focus', () => this.setSubscribes());
     this._navBlurUnsubscribe = this.state.navigation.addListener('blur', () => this.unSetSubscribes());
+    
+    store.dispatch({
+      type: SET_SNACKBAR,
+      payload: {type: "info", message: `10% Tax Will Be Applied To Any Traded Points`}
+    });
   }
 
   componentWillUnmount(){
@@ -214,7 +222,7 @@ export default class NewTrade extends Component {
                         this.setState({tradeFrom: from, fromTradeIsValid})
                       }}
                       rounded
-                      minValue={0} 
+                      minValue={0}
                       maxValue={this.state.userInfo.points}
                       totalHeight={35}
                       leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
@@ -963,7 +971,7 @@ const styles = StyleSheet.create({
     paddingTop: 10, paddingBottom: 10, paddingLeft: 10
   },
   pointsReviewRow:{
-    width:50,
+    width:75,
     flexDirection: "row",
     alignItems:"center",
     justifyContent: "center"
