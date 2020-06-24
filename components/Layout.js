@@ -127,7 +127,6 @@ class Layout extends Component {
 					payload: { type: "error", message: "Error Applying Update" }
 				});
 			}
-
 		}
 		else{
 			store.dispatch({ type: UNSUB_SNAPSHOTS });

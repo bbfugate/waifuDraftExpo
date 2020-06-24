@@ -405,7 +405,6 @@ export async function setRealTimeListeners(userId){
       return;
     }
 
-    var oldUser = _.cloneDeep(store.getState().user)
     var user = _.cloneDeep(store.getState().user)
     user.credentials = {...doc.data(), userId: doc.id};
     firebase.firestore().collection('waifus')

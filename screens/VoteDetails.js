@@ -209,11 +209,11 @@ export default class VoteDetails extends Component {
                   <FlatList
                     data={this.state.pollType == "daily" && this.state.poll.isActive ? _.shuffle(this.state.waifu.votes) : _.orderBy(this.state.waifu.votes, ['vote'], ['desc'])}
                     renderItem={({ item }) => 
-                      <VoteRow 
-                        pollType={this.state.pollType} 
-                        isActive={this.state.poll.isActive} 
-                        vote={item} 
-                        otherUsers={_.cloneDeep(this.state.otherUsers).concat(this.state.userInfo)} 
+                      <VoteRow
+                        pollType={this.state.pollType}
+                        isActive={this.state.poll.isActive}
+                        vote={item}
+                        otherUsers={_.cloneDeep(this.state.otherUsers).concat(this.state.userInfo)}
                       />
                     }
                     keyExtractor={item => item.husbandoId}

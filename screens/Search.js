@@ -38,7 +38,6 @@ export default class Search extends Component {
 		store.dispatch({type: LOADING_UI})
     var compressSearchJson = require('../assets/SearchFile.json');
     var searchJson = JSON.parse(ls.decompress(compressSearchJson));
-		store.dispatch({type: STOP_LOADING_UI})		
 
     this.state = {
       navigation: props.navigation,
@@ -81,6 +80,8 @@ export default class Search extends Component {
         },
       ],
     };
+    
+		store.dispatch({type: STOP_LOADING_UI})
 
     this.openDetails = this.openDetails.bind(this);
     this.searchTextChange = this.searchTextChange.bind(this);

@@ -56,7 +56,7 @@ export default class RankGradient extends PureComponent {
         break;
     }
 
-    this.setState({rank: props.rank, rankColor})
+    this.setState({rank: props.rank, name: props.name, rankColor})
   }
 
   render() {
@@ -64,7 +64,7 @@ export default class RankGradient extends PureComponent {
       <View style={[styles.container]}>
         <View style={[styles.bgContainer, {backgroundColor: this.state.rankColor}]}/>
         <Text style={styles.title} numberOfLines={2}>
-          { this.state.name }
+          { this.state.name.length > 15 ? this.state.name.slice(0,15) + '...' : this.state.name }
         </Text>
       </View>
     );

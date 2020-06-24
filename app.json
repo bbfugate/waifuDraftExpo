@@ -12,7 +12,7 @@
     "icon": "./assets/images/AppIcon.png",
     "scheme": "myapp",
     "splash": {
-      "image": "./assets/images/AppIcon.png",
+      "image": "./assets/images/WDAppLoadingBG.png",
       "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
