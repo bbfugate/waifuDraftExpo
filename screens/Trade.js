@@ -119,7 +119,6 @@ const styles = StyleSheet.create({
   text: {
     color: "white",
     fontSize: 30,
-    fontWeight: "bold",
     textAlign: "center"
   },
   image: {

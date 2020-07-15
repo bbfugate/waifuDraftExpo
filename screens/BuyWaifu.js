@@ -79,10 +79,16 @@ export default class BuyWaifu extends Component {
   }
 
   render(){
+    const waifu = this.state.waifu;
+    
+    var displayName = waifu.name;
+    if(waifu.type != 'Anime-Manga')
+      displayName = `${waifu.name} ${waifu.currentAlias != "" && waifu.currentAlias != waifu.name && !waifu.name.includes(waifu.currentAlias) ? "- " + waifu.currentAlias : ""}`
+
     return (
       <View style={[styles.container]}>
-        <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: this.state.waifu.img}}>
-          <ImageBackground style={[styles.imageContainer]} imageStyle={{resizeMode:"contain"}} source={{uri: this.state.waifu.img}}>
+        <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: waifu.img}}>
+          <ImageBackground style={[styles.imageContainer]} imageStyle={{resizeMode:"contain"}} source={{uri: waifu.img}}>
             <View style={styles.bgView}>
               <Swiper
                 index={0}
@@ -92,21 +98,32 @@ export default class BuyWaifu extends Component {
               >
                 {/* Stats List */}
                 <View style={{flex:1}}>
+                  {/* Name */}
+                  <View style={styles.nameView}>
+                    <Text style={[styles.text,styles.nameText, styles.titleShadow,{fontSize: 45}]}>{displayName}</Text>
+                    <FAB
+                      small
+                      color="white"
+                      style={[styles.fab, {alignSelf: "center"}]}
+                      icon="link-variant"
+                      onPress={this.waifuLinkPress}
+                    />
+                  </View>
 
                   <View style={styles.statsView}>
                     <View style={styles.statsRow}>
-                      <Text style={styles.statText}>ATK: {this.state.waifu.attack}</Text>
-                      <Text style={styles.statText}>DEF: {this.state.waifu.defense}</Text>
+                      <Text style={styles.statText}>ATK: {waifu.attack}</Text>
+                      <Text style={styles.statText}>DEF: {waifu.defense}</Text>
                     </View>
                   </View>
                   <View style={styles.buttonRowView}>
                     <View style={styles.buttonItem}>
                       <Button onPress={() => this.setState({showBuyConf: true})}
-                        disabled={this.state.waifu.rank * 5 > this.state.userInfo.points || this.state.waifu.husbandoId != "Shop"}
+                        disabled={waifu.rank * 5 > this.state.userInfo.points || waifu.husbandoId != "Shop"}
                         mode={"contained"} color={chroma('aqua').hex()} 
                         labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                       >
-                        Buy Waifu - {this.state.waifu.rank * 5}
+                        Buy Waifu - {waifu.rank * 5}
                       </Button>
                     </View>
                   </View>
@@ -114,20 +131,12 @@ export default class BuyWaifu extends Component {
               
                 {/* Details */}
                 <View style={styles.detailsView}>
-                  {this.state.waifu.type == "Anime-Manga" ? <AMCharDetails card={this.state.waifu}/> : <ComicCharDetails card={this.state.waifu} />}
+                  {waifu.type == "Anime-Manga" ? <AMCharDetails card={waifu}/> : <ComicCharDetails card={waifu} />}
                 </View>
               </Swiper>
             </View>
           </ImageBackground>
         </ImageBackground>
-
-        <FAB
-          //small
-          color="white"
-          style={styles.fab}
-          icon="link-variant"
-          onPress={this.waifuLinkPress}
-        />
 
         <Modal
           animationType="slide"
@@ -232,9 +241,8 @@ const styles = StyleSheet.create({
 	},
   fab: {
     position: 'absolute',
-    margin: 8,
-    right: 0,
-    top: 0,
+    right: 5,
+    top: 5,
     backgroundColor: chroma('aqua').hex()
   },
 });

@@ -12,6 +12,10 @@ import _ from 'lodash'
 import lz from "lz-string";
 
 export async function addNewChat(chat){
+  chat.createdBy = store.getState().user.credentials.userId;
+  chat.modifiedBy = store.getState().user.credentials.userId;
+  chat.modifiedDate = firebase.firestore.Timestamp.fromDate(new Date());
+
   store.dispatch({ type: LOADING_UI });
 
   var chatId = await firebase.firestore().collection('chats').add(chat)
@@ -34,6 +38,9 @@ export async function updateMessages(chat){
   store.dispatch({ type: LOADING_UI });
 
   var chatId = chat.chatId;
+  chat.modifiedBy = store.getState().user.credentials.userId;
+  chat.modifiedDate = firebase.firestore.Timestamp.fromDate(new Date());
+  
   delete chat.chatId;
   delete chat.lastViewed;
   
@@ -51,10 +58,32 @@ export async function updateMessages(chat){
   store.dispatch({ type: STOP_LOADING_UI });
 }
 
+export async function toggleMute(chatId, userId){
+  store.dispatch({ type: LOADING_UI });
+
+  await firebase.firestore().doc(`chats/${chatId}`).get()
+  .then(chatDoc => {
+    var chat = chatDoc.data();
+
+    var muted = chat.muted;
+    if(muted.includes(userId))
+      muted = muted.filter(x => x != userId);
+    else
+      muted.push(userId)
+
+    return chatDoc.ref.update({muted})
+  })
+
+  store.dispatch({ type: STOP_LOADING_UI });
+}
+
 export async function leaveGroupChat(chat){
   store.dispatch({ type: LOADING_UI });
 
   var chatId = chat.chatId;
+  chat.modifiedBy = store.getState().user.credentials.userId;
+  chat.modifiedDate = firebase.firestore.Timestamp.fromDate(new Date());
+  
   delete chat.chatId;
   delete chat.lastViewed;
 

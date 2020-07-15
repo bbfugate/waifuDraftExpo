@@ -123,6 +123,8 @@ export default class ViewChat extends Component {
     else{
       var chat = {
         users: this.state.chatUsers.concat(this.state.userInfo.userId),
+        muted: [],
+        createdBy: this.state.userInfo.userId,
         messages: []
       }
 
@@ -148,7 +150,6 @@ export default class ViewChat extends Component {
   }
 
   async createGroupChat(){
-    
     if(this.state.chatName == null){
       store.dispatch({type: SET_SNACKBAR, payload: {type: "error", message: "Add Group Name"}});
       return;
@@ -161,10 +162,11 @@ export default class ViewChat extends Component {
 
     var chat = {
       users: this.state.chatUsers.concat(this.state.userInfo.userId),
+      muted: [],
+      createdBy: this.state.userInfo.userId,
       name: this.state.chatName,
       img: this.state.chatImg,
       messages: [],
-      modifiedDate: new Date()
     }
 
     chat.chatId = await addNewChat(chat);

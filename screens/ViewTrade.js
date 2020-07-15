@@ -35,6 +35,7 @@ export default class ViewTrade extends Component {
       trade: props.route.params.trade,
 			loading: store.getState().data.loading,
       // pollIsActive: store.getState().data.poll.weekly.isActive,
+      waifuList: store.getState().data.waifuList,
       fromUser: users.filter(x => x.userId == props.route.params.trade.from.husbandoId)[0],
       toUser: users.filter(x => x.userId == props.route.params.trade.to.husbandoId)[0],
       userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
@@ -176,7 +177,7 @@ export default class ViewTrade extends Component {
                 <View style={{flex: 1, width: width}}>
                   <FlatGrid
                     itemDimension={150}
-                    items={this.state.fromUser.waifus.filter(x => this.state.trade.from.waifus.map(x => x.waifuId).includes(x.waifuId))}
+                    items={this.state.waifuList.filter(x => this.state.trade.from.waifus.map(x => x.waifuId).includes(x.waifuId))}
                     style={styles.gridView}
                     spacing={20}
                     renderItem={({item, index}) => {
@@ -198,7 +199,7 @@ export default class ViewTrade extends Component {
 
                       return(
                         <View style={[styles.itemContainer]}>
-                          <View style={styles.pointsView}>
+                          <View style={styles.statView}>
                             <View style={styles.statRow}>
                               <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
                               <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
@@ -273,7 +274,7 @@ export default class ViewTrade extends Component {
                 <View style={{flex: 1, width: width}}>
                   <FlatGrid
                     itemDimension={150}
-                    items={this.state.toUser.waifus.filter(x => this.state.trade.to.waifus.map(x => x.waifuId).includes(x.waifuId))}
+                    items={this.state.waifuList.filter(x => this.state.trade.to.waifus.map(x => x.waifuId).includes(x.waifuId))}
                     style={styles.gridView}
                     spacing={20}
                     renderItem={({item, index}) => {

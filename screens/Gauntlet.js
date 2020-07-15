@@ -15,6 +15,11 @@ import rankCoinIcon from '../assets/images/rankCoinIcon.png'
 import statCoinIcon from '../assets/images/statCoinIcon.png'
 import bossDefeatedIcon from '../assets/images/bossDefeated.png'
 
+import shitTierBossIndi from '../assets/images/ShitTierBossIndi.gif'
+import bronzeTierBossIndi from '../assets/images/BronzeTierBossIndi.gif'
+import silverTierBossIndi from '../assets/images/SilverTierBossIndi.gif'
+import goldTierBossIndi from '../assets/images/GoldTierBossIndi.gif'
+
 //Redux
 import store from '../redux/store';
 import watch from 'redux-watch'
@@ -116,6 +121,24 @@ export default class Gauntlet extends Component {
               else
                 userFightRec = userFightRec[0]
 
+              var indi = shitTierBossIndi;
+              
+              var bgColor = "#ff0000";
+              switch(boss.tier){
+                case 2:
+                  indi = bronzeTierBossIndi
+                  bgColor = "#835220"
+                  break;
+                case 3:
+                  indi = silverTierBossIndi
+                  bgColor = "#7b7979"
+                  break;
+                case 4:
+                  indi = goldTierBossIndi
+                  bgColor = "#b29600"
+                  break;
+              }
+
               return (
                 <View key={boss.name} onLayout={this._onLayoutDidChange}
                   style={{flex:1, justifyContent:"center", alignItems:"center"}}>
@@ -130,10 +153,10 @@ export default class Gauntlet extends Component {
                     rippleColor="rgba(0, 0, 0, 1)"
                     style={{height: this.state.size.height * .9, width: width * .85}}
                   >
-                    <ImageBackground blurRadius={1} style={[styles.imageContainer]}
+                    <ImageBackground blurRadius={.25} style={[styles.imageContainer]}
                       imageStyle={{resizeMode:"cover"}} source={{uri: boss.img}}>
                       <LinearGradient
-                        colors={['rgba(252,177,0,0.5)', 'rgba(255,149,0,0.75)', 'rgba(255,149,0,1)']}
+                        colors={[chroma(bgColor).alpha(.25), chroma(bgColor).alpha(.5), chroma(bgColor).alpha(.75)]}
                         style={{
                           ...StyleSheet.absoluteFillObject,
                           zIndex:0,
@@ -141,8 +164,9 @@ export default class Gauntlet extends Component {
                         }}
                       >
                         <View style={{height: '100%', width: '100%'}}>
-                          <ImageBackground style={[styles.imageContainer]}
-                            imageStyle={{resizeMode:"contain"}} source={{uri: boss.img}}/>
+                          <Image style={{position: 'absolute', top: 5, right: 5, height: 50, width: 50, resizeMode: "contain"}} source={indi}/>
+
+                          <Image style={{...StyleSheet.absoluteFillObject, top: '25%', left: '10%', height: '60%', width: '80%', resizeMode: "contain"}} source={{uri: boss.img}}/>
                         </View>
                       </LinearGradient>
                       

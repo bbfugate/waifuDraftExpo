@@ -71,7 +71,7 @@ export default class SnackBar extends React.Component {
 
 const styles = StyleSheet.create({
   container: {
-    minHeight: 100,
+    height: 'auto',
     width: width,
     justifyContent: 'space-between',
     position:"absolute",

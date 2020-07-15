@@ -35,6 +35,8 @@ import SearchScreen from '../screens/Search';
 import SearchSeriesScreen from '../screens/SearchSeries';
 import SearchCharactersScreen from '../screens/SearchCharacters';
 import SubmitCharacterScreen from '../screens/SubmitCharacter';
+import ViewWishListCharactersScreen from '../screens/ViewWishListCharacters';
+import UserWaifuFavoritesScreen from '../screens/UserWaifuFavorites';
 
 import ShopScreen from '../screens/Shop';
 import BuyWaifuScreen from '../screens/BuyWaifu';
@@ -78,6 +80,7 @@ function SearchStackScreen() {
       <SearchStack.Screen name="SearchSeries" component={SearchSeriesScreen} />
       <SearchStack.Screen name="SearchCharacters" component={SearchCharactersScreen} />
       <SearchStack.Screen name="SubmitCharacter" component={SubmitCharacterScreen} />
+      <SearchStack.Screen name="ViewWishListCharacters" component={ViewWishListCharactersScreen} />
     </SearchStack.Navigator>
   );
 }
@@ -93,7 +96,10 @@ function ProfileStackScreen() {
     >
       <ProfileStack.Screen name="Profile" component={ProfileScreen} />
       <ProfileStack.Screen name="CharDetails" component={CharDetailsScreen} />
+      <ProfileStack.Screen name="OtherUserCharDetails" component={OtherUserCharDetailsScreen} />
       <ProfileStack.Screen name="ViewTrade" component={ViewTradeScreen} />
+      <ProfileStack.Screen name="SubmitCharacter" component={SubmitCharacterScreen} />
+      <ProfileStack.Screen name="UserWaifuFavorites" component={UserWaifuFavoritesScreen} />
     </ProfileStack.Navigator>
   );
 }
@@ -109,10 +115,13 @@ function TradeStackScreen() {
     >
       <TradeStack.Screen name="Trade" component={TradeScreen} />
       <TradeStack.Screen name="OtherUserProfile" component={OtherUserProfileScreen} />
+      <TradeStack.Screen name="CharDetails" component={CharDetailsScreen} />
       <TradeStack.Screen name="OtherUserCharDetails" component={OtherUserCharDetailsScreen} />
       <TradeStack.Screen name="NewTrade" component={NewTradeScreen} />
       <TradeStack.Screen name="ViewTrade" component={ViewTradeScreen} />
       <TradeStack.Screen name="ViewChat" component={ViewChatScreen} />
+      <ProfileStack.Screen name="SubmitCharacter" component={SubmitCharacterScreen} />
+      <ProfileStack.Screen name="UserWaifuFavorites" component={UserWaifuFavoritesScreen} />
     </TradeStack.Navigator>
   );
 }

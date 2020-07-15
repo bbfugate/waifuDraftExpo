@@ -3,6 +3,8 @@ import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Button, Image,
 import { Text, FAB, TouchableRipple } from 'react-native-paper';
 import Swiper from 'react-native-swiper'
 
+import * as WebBrowser from 'expo-web-browser';
+
 import _ from 'lodash';
 const chroma = require('chroma-js')
 
@@ -82,7 +84,6 @@ const styles = StyleSheet.create({
 const { width, height } = Dimensions.get('window');
 const ComicCharDetails = ({ card }) => {
   //Comic Variables
-  const displayName = `${card.name} ${card.currentAlias != "" && card.currentAlias != card.name && !card.name.includes(card.currentAlias) ? "- " + card.currentAlias : ""}`
   const [detailViewHeight, setDetailViewHeight] = React.useState(height);
   const onLayout = (e) => {
     //setDetailViewHeight(e.nativeEvent.layout.height)
@@ -105,11 +106,6 @@ const ComicCharDetails = ({ card }) => {
       > */}
 
         <View style={styles.container} onLayout={onLayout}>
-          {/* Name */}
-          <View style={styles.nameView}>
-            <Text style={[styles.text,styles.nameText, styles.titleShadow,{fontSize: 45}]}>{displayName}</Text>
-          </View>
-
           {/* Tags */}
           {/* <View style={{height: 150}}>
             <View  style={{height: 50}}>

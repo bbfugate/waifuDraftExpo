@@ -13,7 +13,7 @@ import Swiper from 'react-native-swiper'
 import { Video } from 'expo-av';
 
 // Redux stuff
-import store from "../redux/store";
+import store from '../redux/store';
 import {
   LOADING_UI,
   STOP_LOADING_UI,
@@ -36,16 +36,20 @@ export default class Search extends Component {
     super(props);
 
 		store.dispatch({type: LOADING_UI})
-    var compressSearchJson = require('../assets/SearchFile.json');
-    var searchJson = JSON.parse(ls.decompress(compressSearchJson));
+    var searchItems = store.getState().data.searchItems;
+    if(_.isEmpty(searchItems)){
+      var compressSearchJson = require('../assets/SearchFile.json');
+      searchItems = JSON.parse(ls.decompress(compressSearchJson));
+      store.dispatch({ type: SET_SEARCH_DATA, payload: searchItems }); 
+    }
 
     this.state = {
       navigation: props.navigation,
-      origSearchItems: searchJson,
+      origSearchItems: searchItems,
       searchItems: {
-        'Anime-Manga': searchJson.views['Anime-Manga'].items,
-        'Marvel': searchJson.views['Marvel'].items,
-        'DC': searchJson.views['DC'].items,
+        'Anime-Manga': searchItems.views['Anime-Manga'].items,
+        'Marvel': searchItems.views['Marvel'].items,
+        'DC': searchItems.views['DC'].items,
       },
       searchText: {
         'Anime-Manga': "",
@@ -85,6 +89,7 @@ export default class Search extends Component {
 
     this.openDetails = this.openDetails.bind(this);
     this.searchTextChange = this.searchTextChange.bind(this);
+    this.openWishListScreen = this.openWishListScreen.bind(this);
   }
 
   searchTextChange(view, text){
@@ -140,177 +145,191 @@ export default class Search extends Component {
     this.state.navigation.navigate("SearchCharacters", {chars, type: view})
   }
 
+  openWishListScreen(){
+    this.state.navigation.navigate("ViewWishListCharacters", {})
+  }
+
   render() {
     return (
-      <Swiper
-        index={1}
-        showsPagination={false}
-        style={styles.container}
-        bounces
-      >
-        <View style={styles.slideContainer}>
-          <ImageBackground style={[styles.image,{backgroundColor: chroma.random().alpha(.15)}]} source={{uri: DCImg}}>
-            <View style={styles.slide}>
-              <Searchbar
-                placeholder="Search DC Team By Name"
-                style={[styles.searchBar, {width: width * .8, opacity: this.state.searchBarFocused ? 1 : .5}]}
-                onBlur={() => this.setState({searchBarFocused: false})}
-                onFocus={() => this.setState({searchBarFocused: true})}
-                inputStyle={{fontFamily: "Edo", fontSize:15}}
-                onChangeText={(text ) => this.searchTextChange('DC', text)}
-                value={this.state.searchText['DC']}
-              />
-              
-              <View style={styles.SeriesListView}>
-                <FlatGrid
-                  itemDimension={150}
-                  items={this.state.searchItems['DC']}
-                  style={styles.gridView}
-                  // staticDimension={300}
-                  // fixed
-                  spacing={20}
-                  renderItem={({item, index}) => {
-                    return(
-                      <TouchableOpacity activeOpacity={.25} onPress={() => this.openDetails('DC', item)} style={styles.itemContainer}>
-                        <Image
-                          style={{
-                            flex: 1,
-                            resizeMode: "cover",
-                            borderRadius: 10,
-                            opacity: 1,
-                            ...StyleSheet.absoluteFillObject,
-                            
-                          }}
-                          source={{uri: item.img}}
-                        />
-                        <View style={{height: 50,  padding: 2, backgroundColor: chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
-                          <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.name.length > 15 ? item.name.slice(0,15) + '...' : item.name}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    )
-                  }}
+      <View style={{flex: 1}}>
+        <Swiper
+          index={1}
+          showsPagination={false}
+          style={styles.container}
+          bounces
+        >
+          <View style={styles.slideContainer}>
+            <ImageBackground style={[styles.image,{backgroundColor: chroma.random().alpha(.15)}]} source={{uri: DCImg}}>
+              <View style={styles.slide}>
+                <Searchbar
+                  placeholder="Search DC Team By Name"
+                  style={[styles.searchBar, {width: width * .8, opacity: this.state.searchBarFocused ? 1 : .5}]}
+                  onBlur={() => this.setState({searchBarFocused: false})}
+                  onFocus={() => this.setState({searchBarFocused: true})}
+                  inputStyle={{fontFamily: "Edo", fontSize:15}}
+                  onChangeText={(text ) => this.searchTextChange('DC', text)}
+                  value={this.state.searchText['DC']}
+                />
+                
+                <View style={styles.SeriesListView}>
+                  <FlatGrid
+                    itemDimension={150}
+                    items={this.state.searchItems['DC']}
+                    style={styles.gridView}
+                    // staticDimension={300}
+                    // fixed
+                    spacing={20}
+                    renderItem={({item, index}) => {
+                      return(
+                        <TouchableOpacity activeOpacity={.25} onPress={() => this.openDetails('DC', item)} style={styles.itemContainer}>
+                          <Image
+                            style={{
+                              flex: 1,
+                              resizeMode: "cover",
+                              borderRadius: 10,
+                              opacity: 1,
+                              ...StyleSheet.absoluteFillObject,
+                              
+                            }}
+                            source={{uri: item.img}}
+                          />
+                          <View style={{height: 50,  padding: 2, backgroundColor: chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
+                            <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.name.length > 15 ? item.name.slice(0,15) + '...' : item.name}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      )
+                    }}
+                  />
+                </View>
+                
+                <FAB
+                  //small
+                  color="white"
+                  style={styles.fab}
+                  icon="account-multiple"
+                  onPress={() => this.loadCharacters('DC')}
                 />
               </View>
-              
-              <FAB
-                //small
-                color="white"
-                style={styles.fab}
-                icon="account-multiple"
-                onPress={() => this.loadCharacters('DC')}
-              />
-            </View>
-          </ImageBackground>
-        </View>
-        <View style={styles.slideContainer}>
-          <ImageBackground style={[styles.image,{backgroundColor: chroma.random().alpha(.95)}]} source={{uri: AMImg}}>
-            <View style={styles.slide}>
-              <Searchbar
-                placeholder="Search Anime/Manga By Name"
-                style={[styles.searchBar, {width: width * .8, opacity: this.state.searchBarFocused ? 1 : .5}]}
-                onBlur={() => this.setState({searchBarFocused: false})}
-                onFocus={() => this.setState({searchBarFocused: true})}
-                inputStyle={{fontFamily: "Edo", fontSize:15}}
-                onChangeText={(text ) => this.searchTextChange('Anime-Manga', text)}
-                value={this.state.searchText['Anime-Manga']}
-              />
-              
-              <View style={styles.SeriesListView}>
-                <FlatGrid
-                  itemDimension={150}
-                  items={this.state.searchItems['Anime-Manga']}
-                  style={styles.gridView}
-                  // staticDimension={300}
-                  // fixed
-                  spacing={20}
-                  renderItem={({item, index}) => {
-                    return(
-                      <TouchableOpacity activeOpacity={.25} onPress={() => this.openDetails('Anime-Manga', item)} style={styles.itemContainer}>
-                        <Image
-                          style={{
-                            flex: 1,
-                            resizeMode: "cover",
-                            borderRadius: 10,
-                            opacity: 1,
-                            ...StyleSheet.absoluteFillObject,
-                            
-                          }}
-                          source={{uri: item.img}}
-                        />
-                        <View style={{height: 50,  padding: 2, backgroundColor: chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
-                          <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.name.length > 15 ? item.name.slice(0,15) + '...' : item.name}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    )
-                  }}
+            </ImageBackground>
+          </View>
+          <View style={styles.slideContainer}>
+            <ImageBackground style={[styles.image,{backgroundColor: chroma.random().alpha(.95)}]} source={{uri: AMImg}}>
+              <View style={styles.slide}>
+                <Searchbar
+                  placeholder="Search Anime/Manga By Name"
+                  style={[styles.searchBar, {width: width * .8, opacity: this.state.searchBarFocused ? 1 : .5}]}
+                  onBlur={() => this.setState({searchBarFocused: false})}
+                  onFocus={() => this.setState({searchBarFocused: true})}
+                  inputStyle={{fontFamily: "Edo", fontSize:15}}
+                  onChangeText={(text ) => this.searchTextChange('Anime-Manga', text)}
+                  value={this.state.searchText['Anime-Manga']}
+                />
+                
+                <View style={styles.SeriesListView}>
+                  <FlatGrid
+                    itemDimension={150}
+                    items={this.state.searchItems['Anime-Manga']}
+                    style={styles.gridView}
+                    // staticDimension={300}
+                    // fixed
+                    spacing={20}
+                    renderItem={({item, index}) => {
+                      return(
+                        <TouchableOpacity activeOpacity={.25} onPress={() => this.openDetails('Anime-Manga', item)} style={styles.itemContainer}>
+                          <Image
+                            style={{
+                              flex: 1,
+                              resizeMode: "cover",
+                              borderRadius: 10,
+                              opacity: 1,
+                              ...StyleSheet.absoluteFillObject,
+                              
+                            }}
+                            source={{uri: item.img}}
+                          />
+                          <View style={{height: 50,  padding: 2, backgroundColor: chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
+                            <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.name.length > 15 ? item.name.slice(0,15) + '...' : item.name}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      )
+                    }}
+                  />
+                </View>
+                
+                <FAB
+                  //small
+                  color="white"
+                  style={styles.fab}
+                  icon="account-multiple"
+                  onPress={() => this.loadCharacters('Anime-Manga')}
                 />
               </View>
-              
-              <FAB
-                //small
-                color="white"
-                style={styles.fab}
-                icon="account-multiple"
-                onPress={() => this.loadCharacters('Anime-Manga')}
-              />
-            </View>
-          </ImageBackground>
-        </View>
-        <View style={styles.slideContainer}>
-          <ImageBackground style={[styles.image,{backgroundColor: chroma.random().alpha(.15)}]} source={{uri: MarvelImg}}>
-            <View style={styles.slide}>
-              <Searchbar
-                placeholder="Search Marvel Team By Name"
-                style={[styles.searchBar, {width: width * .8, opacity: this.state.searchBarFocused ? 1 : .5}]}
-                onBlur={() => this.setState({searchBarFocused: false})}
-                onFocus={() => this.setState({searchBarFocused: true})}
-                inputStyle={{fontFamily: "Edo", fontSize:15}}
-                onChangeText={(text ) => this.searchTextChange('Marvel', text)}
-                value={this.state.searchText['Marvel']}
-              />
-              
-              <View style={styles.SeriesListView}>
-                <FlatGrid
-                  itemDimension={150}
-                  items={this.state.searchItems['Marvel']}
-                  style={styles.gridView}
-                  // staticDimension={300}
-                  // fixed
-                  spacing={20}
-                  renderItem={({item, index}) => {
-                    return(
-                      <TouchableOpacity activeOpacity={.25} onPress={() => this.openDetails('Marvel', item)} style={styles.itemContainer}>
-                        <Image
-                          style={{
-                            flex: 1,
-                            resizeMode: "cover",
-                            borderRadius: 10,
-                            opacity: 1,
-                            ...StyleSheet.absoluteFillObject,
-                            
-                          }}
-                          source={{uri: item.img}}
-                        />
-                        <View style={{height: 50,  padding: 2, backgroundColor: chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
-                          <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.name.length > 15 ? item.name.slice(0,15) + '...' : item.name}</Text>
-                        </View>
-                      </TouchableOpacity>
-                    )
-                  }}
+            </ImageBackground>
+          </View>
+          <View style={styles.slideContainer}>
+            <ImageBackground style={[styles.image,{backgroundColor: chroma.random().alpha(.15)}]} source={{uri: MarvelImg}}>
+              <View style={styles.slide}>
+                <Searchbar
+                  placeholder="Search Marvel Team By Name"
+                  style={[styles.searchBar, {width: width * .8, opacity: this.state.searchBarFocused ? 1 : .5}]}
+                  onBlur={() => this.setState({searchBarFocused: false})}
+                  onFocus={() => this.setState({searchBarFocused: true})}
+                  inputStyle={{fontFamily: "Edo", fontSize:15}}
+                  onChangeText={(text ) => this.searchTextChange('Marvel', text)}
+                  value={this.state.searchText['Marvel']}
+                />
+                
+                <View style={styles.SeriesListView}>
+                  <FlatGrid
+                    itemDimension={150}
+                    items={this.state.searchItems['Marvel']}
+                    style={styles.gridView}
+                    // staticDimension={300}
+                    // fixed
+                    spacing={20}
+                    renderItem={({item, index}) => {
+                      return(
+                        <TouchableOpacity activeOpacity={.25} onPress={() => this.openDetails('Marvel', item)} style={styles.itemContainer}>
+                          <Image
+                            style={{
+                              flex: 1,
+                              resizeMode: "cover",
+                              borderRadius: 10,
+                              opacity: 1,
+                              ...StyleSheet.absoluteFillObject,
+                              
+                            }}
+                            source={{uri: item.img}}
+                          />
+                          <View style={{height: 50,  padding: 2, backgroundColor: chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
+                            <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>{item.name.length > 15 ? item.name.slice(0,15) + '...' : item.name}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      )
+                    }}
+                  />
+                </View>
+                
+                <FAB
+                  //small
+                  color="white"
+                  style={styles.fab}
+                  icon="account-multiple"
+                  onPress={() => this.loadCharacters('Marvel')}
                 />
               </View>
-              
-              <FAB
-                //small
-                color="white"
-                style={styles.fab}
-                icon="account-multiple"
-                onPress={() => this.loadCharacters('Marvel')}
-              />
-            </View>
-          </ImageBackground>
-        </View>
-      </Swiper>
+            </ImageBackground>
+          </View>
+        </Swiper>
+        
+        <FAB
+          small
+          color="white"
+          style={styles.favFab}
+          icon="heart-box"
+          onPress={() => this.openWishListScreen()}
+        />
+      </View>
     );
   }
 }
@@ -324,7 +343,6 @@ const styles = StyleSheet.create({
   text: {
     color: "white",
     fontSize: 30,
-    fontWeight: "bold",
     textAlign: "center"
   },
   image: {
@@ -382,4 +400,11 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0
   },
+  favFab: {
+    position: 'absolute',
+    zIndex: 10,
+    margin: 8,
+    right: 5,
+    top: 5
+  }
 })

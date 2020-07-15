@@ -18,7 +18,7 @@ import statCoinIcon from '../assets/images/statCoinIcon.png'
 import bossDefeatedIcon from '../assets/images/bossDefeated.png'
 import bossVSIcon from '../assets/images/bossVsIcon.png'
 import bossHpIcon from '../assets/images/bossHpIcon.png'
-import bossFightGif from '../assets/images/bossFight.gif'
+import bossFightGif from '../assets/images/Boss-Fight.gif'
 import bossFightVSBgGif from '../assets/images/Boss-Fight-VS-BG.gif'
 import bossFightVSEffectGif from '../assets/images/Boss-Fight-VS-Effect.gif'
 
@@ -51,7 +51,9 @@ export default class BossFight extends Component {
       boss: props.route.params.boss,
       bosses: store.getState().data.bosses,
 			loading: store.getState().data.loading,
-      userInfo: {...store.getState().user.credentials, waifus: _.orderBy(store.getState().user.waifus, ['rank'], ['desc']) },
+      waifuList: store.getState().data.waifuList,
+      waifus: store.getState().user.waifus,
+      userInfo: store.getState().user.credentials,
       selectedWaifu: null,
       waifuRankColor: "",
       fightActive: false,
@@ -76,11 +78,11 @@ export default class BossFight extends Component {
     
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
       var boss = newVal.bosses.filter(x => x.bossId == this.state.boss.bossId)[0]
-      this.setState({ bosses: newVal.bosses, boss })
+      this.setState({ bosses: newVal.bosses, boss, waifuList: newVal.waifuList  })
     }))
 
     store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
-      this.setState({ userInfo: {...newVal.credentials, waifus: _.orderBy(newVal.waifus, ['rank'], ['desc']) }})
+      this.setState({ userInfo: newVal.credentials, waifus: newVal.waifus })
     }))
 
     var bosses = _.cloneDeep(store.getState().data.bosses);
@@ -89,6 +91,7 @@ export default class BossFight extends Component {
     this.setState({
       boss,
       bosses,
+      waifuList: store.getState().data.waifuList,
     })
   }
 
@@ -258,13 +261,28 @@ export default class BossFight extends Component {
   };
 
   render(){
-    var waifuGroups = _.chain(_.cloneDeep(this.state.userInfo.waifus))
+    var waifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.waifus.includes(x.waifuId));
+    var waifuGroups = _.chain(waifus)
     .groupBy(waifu => Number(waifu.rank))
     .map((waifus, rank) => ({ rank: Number(rank), waifus }))
     .orderBy(group => Number(group.rank), ['desc'])
     .value()
 
-    const waifus = waifuGroups.flatMap(x => x.waifus)
+    waifus = waifuGroups.flatMap(x => x.waifus)
+
+    var bgColor = "#ff0000";
+    switch(this.state.boss.tier){
+      case 2:
+        bgColor = "#835220"
+        break;
+      case 3:
+        bgColor = "#7b7979"
+        break;
+      case 4:
+        bgColor = "#b29600"
+        break;
+    }
+
     return (
       <>
         {this.state.loading ?
@@ -340,12 +358,12 @@ export default class BossFight extends Component {
               {this.state.selectedWaifu == null ?
                 <></>
               :
-                <>
+                <View style={{height: '100%', width:'100%'}}>
                   <Image source={bossVSIcon} 
                     style={{
                       height:150,
                       width:150,
-                      position: "absolute",
+                      ...StyleSheet.absoluteFillObject,
                       left: this.state.size.width/2 - 75,
                       top: (this.state.size.height/2) - 65,
                       zIndex: 5
@@ -357,8 +375,45 @@ export default class BossFight extends Component {
                       left: this.state.size.width/2 - 200,
                       top: (this.state.size.height/2) - 200,
                       height: 400, width: 400, zIndex:6
-                    }}/>
+                  }}/>
+
+                  <Image source={bossFightVSBgGif} resizeMode={"cover"} style={{...StyleSheet.absoluteFillObject, height: this.state.size.height, width: width, zIndex:1}}/>
                   
+                  {/* Waifu Preview*/}
+                  <View style={{height: '30%', width: '40%', position:"absolute", left:10, top: 10, zIndex:2}}>
+                    <ImageBackground style={[styles.imageContainer, {borderRadius: 10}]}
+                      imageStyle={{resizeMode:"cover"}} source={{uri: this.state.selectedWaifu.img}}>
+                      <>
+                        <View style={[styles.statRow, {position:"absolute", left:10, top: 10}]}>
+                          <Image style={[styles.statImg, {tintColor: chroma(this.state.waifuRankColor), height: 50, width:50}]} source={atkIcon} />
+                          <Text style={[ styles.statsText, {color: chroma(this.state.waifuRankColor), fontSize: 50}]}>{this.state.selectedWaifu.attack}</Text>
+                        </View>
+                        <View style={[styles.statRow, {position:"absolute", left:10, top: 75}]}>
+                          <Image style={[styles.statImg, {tintColor: chroma(this.state.waifuRankColor), height: 50, width:50}]} source={defIcon} />
+                          <Text style={[ styles.statsText, {color: chroma(this.state.waifuRankColor), fontSize: 50}]}>{this.state.selectedWaifu.defense}</Text>
+                        </View>
+                      </>
+                    </ImageBackground>
+                  </View>
+                  
+                  {/* Boss Preview*/}
+                  <View style={{height: '30%', width: '40%', position:"absolute", right:10, bottom: 10, zIndex:2}}>
+                    <ImageBackground style={[styles.imageContainer, {borderRadius: 10}]}
+                      imageStyle={{resizeMode:"cover"}} source={{uri: this.state.boss.img}}>
+                      <View style={[styles.statRow, {position:"absolute", zIndex:10, left:10, top: 10}]}>
+                        <Image style={[styles.statImg, {tintColor: 'white', height: 50, width:50, tintColor: chroma('cyan').hex()}]} source={bossHpIcon} />
+                        <Text style={[ styles.statsText, {color: 'white', fontSize: 50,
+                          textShadowColor: chroma('cyan').hex(),
+                          textShadowOffset: {width: -1, height: 1},
+                          textShadowRadius: 10
+                          }]}
+                        >
+                          {this.state.boss.hp}
+                        </Text>
+                      </View>
+                    </ImageBackground>
+                  </View>
+                      
                   {/* Waifu Image */}
                   <MaskedView
                     style={{height: this.state.size.height, width: this.state.size.width, position: "absolute"}}
@@ -366,7 +421,7 @@ export default class BossFight extends Component {
                       <View style={[styles.waifuMask, {borderRightWidth: this.state.size.width, borderTopWidth: this.state.size.height}]}/>
                     }
                   >
-                    <ImageBackground blurRadius={1} style={[styles.imageContainer]}
+                    <ImageBackground blurRadius={.5} style={[styles.imageContainer]}
                       imageStyle={{resizeMode:"cover"}} source={{uri: this.state.selectedWaifu.img}}>
                       <LinearGradient
                         colors={[chroma(this.state.waifuRankColor).alpha(.25), chroma(this.state.waifuRankColor).alpha(.5), chroma(this.state.waifuRankColor).alpha(.75)]}
@@ -376,24 +431,7 @@ export default class BossFight extends Component {
                           justifyContent:"center", alignItems:"center",
                           backgroundColor: chroma('black').alpha(.25)
                         }}
-                      >
-                        <Image source={bossFightVSBgGif} resizeMode={"cover"} style={{...StyleSheet.absoluteFillObject, height: this.state.size.height, width: width, zIndex:1}}/>
-                        <View style={{height: '40%', width: '45%', position:"absolute", left:10, top: 10, zIndex:2}}>
-                          <ImageBackground style={[styles.imageContainer, {borderRadius: 10}]}
-                            imageStyle={{resizeMode:"cover"}} source={{uri: this.state.selectedWaifu.img}}>
-                            <>
-                              <View style={[styles.statRow, {position:"absolute", left:10, top: 10}]}>
-                                <Image style={[styles.statImg, {tintColor: chroma(this.state.waifuRankColor), height: 50, width:50}]} source={atkIcon} />
-                                <Text style={[ styles.statsText, {color: chroma(this.state.waifuRankColor), fontSize: 50}]}>{this.state.selectedWaifu.attack}</Text>
-                              </View>
-                              <View style={[styles.statRow, {position:"absolute", left:10, top: 75}]}>
-                                <Image style={[styles.statImg, {tintColor: chroma(this.state.waifuRankColor), height: 50, width:50}]} source={defIcon} />
-                                <Text style={[ styles.statsText, {color: chroma(this.state.waifuRankColor), fontSize: 50}]}>{this.state.selectedWaifu.defense}</Text>
-                              </View>
-                            </>
-                          </ImageBackground>
-                        </View>
-                      </LinearGradient>
+                      />
                     </ImageBackground>
                   </MaskedView>
 
@@ -404,41 +442,23 @@ export default class BossFight extends Component {
                       <View style={[styles.bossMask, {borderRightWidth: this.state.size.width, borderTopWidth: this.state.size.height}]}/>
                     }
                   >
-                    <ImageBackground blurRadius={1} style={[styles.imageContainer]}
+                    <ImageBackground blurRadius={.5} style={[styles.imageContainer]}
                       imageStyle={{resizeMode:"cover"}} source={{uri: this.state.boss.img}}>
                         
                       <LinearGradient
-                        colors={['rgba(252,177,0,0.25)', 'rgba(255,149,0,0.5)', 'rgba(255,149,0,.75)']}
+                        colors={[chroma(bgColor).alpha(.25), chroma(bgColor).alpha(.5), chroma(bgColor).alpha(.75)]}
                         style={{
                           ...StyleSheet.absoluteFillObject,
                           zIndex:0,
                           justifyContent:"center", alignItems:"center",
                           backgroundColor: chroma('black').alpha(.25)
                         }}
-                      >
-                        <Image source={bossFightVSBgGif} resizeMode={"cover"} style={{...StyleSheet.absoluteFillObject, height: this.state.size.height, width: width, zIndex:1}}/>
-                      
-                        <View style={{height: '40%', width: '45%', position:"absolute", right:10, bottom: 10, zIndex:2}}>
-                          <ImageBackground style={[styles.imageContainer, {borderRadius: 10}]}
-                            imageStyle={{resizeMode:"cover"}} source={{uri: this.state.boss.img}}>
-                            <View style={[styles.statRow, {position:"absolute", zIndex:10, left:10, top: 10}]}>
-                              <Image style={[styles.statImg, {tintColor: 'white', height: 50, width:50, tintColor: chroma('cyan').hex()}]} source={bossHpIcon} />
-                              <Text style={[ styles.statsText, {color: 'white', fontSize: 50,
-                                textShadowColor: chroma('cyan').hex(),
-                                textShadowOffset: {width: -1, height: 1},
-                                textShadowRadius: 10
-                                }]}
-                              >
-                                {this.state.boss.hp}
-                              </Text>
-                            </View>
-                          </ImageBackground>
-                        </View>
-                      </LinearGradient>
+                      />
                     </ImageBackground>
                   </MaskedView>
                   
-                  <View style={{height: 50, width: width * .4, position:"absolute", bottom: 5}}>
+                  <View style={{height: 50, width: width * .4, position:"absolute", zIndex:7,
+                    bottom: (this.state.size.height/2) - 125, left: (this.state.size.width/2) - width * .2}}>
                     <Button
                       mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                       onPress={() => this.startBossFight()}
@@ -451,7 +471,7 @@ export default class BossFight extends Component {
                     icon="arrow-left-thick"
                     onPress={() => this.handleSlideChange("back")}
                   />
-                </>
+                </View>
               }
             </View>
           
@@ -485,19 +505,23 @@ export default class BossFight extends Component {
                       </View>
                     </View>*/}
 
-                    <View style={{ height:45, flexDirection:"row", justifyContent:"center", alignSelf:"center"}}>
-                      {this.state.rolls.map(roll => {
-                        return(
-                          <View style={{height:35, width:35, margin:5,
-                            position:"relative", borderRadius: 5, backgroundColor:"black",
-                            borderColor:"white", borderWidth: 1, alignItems:"center", justifyContent:"center"}}>
-                            <View style={{width:35, position:"absolute", top:7}}>
-                              <Text style={[ styles.statsText, {color: 'white', fontSize: 16, textAlign:"center"}]}>{roll}</Text>
-                            </View>
-                          </View>
-                        )
-                      })}
-                    </View>
+                    {
+                      this.state.rolls.length > 1 ?
+                        <View style={{ height:45, flexDirection:"row", justifyContent:"center", alignSelf:"center"}}>
+                          {this.state.rolls.map(roll => {
+                            return(
+                              <View style={{height:35, width:35, margin:5,
+                                position:"relative", borderRadius: 5, backgroundColor:"black",
+                                borderColor:"white", borderWidth: 1, alignItems:"center", justifyContent:"center"}}>
+                                <View style={{width:35, position:"absolute", top:7}}>
+                                  <Text style={[ styles.statsText, {color: 'white', fontSize: 16, textAlign:"center"}]}>{roll}</Text>
+                                </View>
+                              </View>
+                            )
+                          })}
+                        </View>
+                      :<></>
+                    }
                     
                     <View style={{ flex:1, flexDirection:"row", justifyContent:"center", alignSelf:"center"}}>
                       <View style={{height:75, width:75, margin:5,
@@ -656,6 +680,7 @@ const styles = StyleSheet.create({
     margin: 8,
     left: 0,
     bottom: 30,
+    zIndex: 2,
     backgroundColor: chroma('red').hex()
   },
   exitFab: {

@@ -210,7 +210,7 @@ export async function submitWaifu(waifuData){
     if(data.length > 0)
       throw "Waifu Already Submitted";
 
-    waifuData.husbandoId = "Poll"
+    waifuData.husbandoId = "Weekly"
     waifuData.submittedBy = user.userName;
     waifuData.type = waifuData.publisher != null ? waifuData.publisher : waifuData.type = "Anime-Manga";
     
@@ -239,6 +239,28 @@ export async function submitWaifu(waifuData){
       type: SET_SNACKBAR,
       payload: {type: "error", message: "Error Submitting Waifu"}
     });
+  })
+  
+  store.dispatch({ type: STOP_LOADING_UI });
+}
+
+export async function toggleWishListWaifu(link){
+  store.dispatch({ type: LOADING_UI });
+
+  var userId = store.getState().user.credentials.userId;
+  await firebase.firestore().doc(`users/${userId}`).get()
+  .then((doc) => {
+    var user = doc.data();
+
+    var wishList = user.wishList;
+    if(wishList.includes(link)){
+      wishList = wishList.filter(x => x != link);
+    }
+    else{
+      wishList.push(link)
+    }
+
+    doc.ref.update({wishList})
   })
   
   store.dispatch({ type: STOP_LOADING_UI });
@@ -412,7 +434,7 @@ export async function setRealTimeListeners(userId){
     .then((data) => {
       user.waifus = [];
       data.forEach((doc) => {
-        user.waifus.push({...doc.data(), waifuId: doc.id});
+        user.waifus.push(doc.id);
       });
 
       store.dispatch({
@@ -460,8 +482,9 @@ export async function setRealTimeListeners(userId){
           submitSlots: x.data().submitSlots,
           rankCoins: x.data().rankCoins,
           statCoins: x.data().statCoins,
+          wishList: x.data().wishList,
           img: x.data().img,
-          waifus: waifus.filter(y => y.husbandoId == x.id)
+          waifus: waifus.filter(y => y.husbandoId == x.id).map(x => x.waifuId)
         };
 
         otherUsers.push(nUser);
@@ -483,7 +506,7 @@ export async function setRealTimeListeners(userId){
       .then((data) => {
         var arr = [];
         data.forEach((doc) => {
-          arr.push({...doc.data(), id: doc.id});
+          arr.push({...doc.data(), waifuId: doc.id});
         });
         
         return arr
@@ -520,7 +543,7 @@ export async function setRealTimeListeners(userId){
     store.dispatch({ type: SET_WAIFU_LIST, payload: waifus });
 
     var userInfo = store.getState().user.credentials;
-    var userWaifus = waifus.filter(x => x.husbandoId == userInfo.userId);
+    var userWaifus = waifus.filter(x => x.husbandoId == userInfo.userId).map(x => x.waifuId);
 
     store.dispatch({
       type: SET_USER,
@@ -537,7 +560,6 @@ export async function setRealTimeListeners(userId){
       var userList = await firebase.firestore().collection('users').get()
       .then((users) => {
         var templist = [];
-  
         
         users.forEach((user) => {
           templist.push({ userId: user.id, userName: user.data().userName })
@@ -557,12 +579,19 @@ export async function setRealTimeListeners(userId){
           vote.husbando = user;
         })
 
-        if(waifu.husbandoId == "Poll")
-          poll.weekly.push({...waifu, waifuId: doc.id})
-        else
-          poll.daily.push({...waifu, waifuId: doc.id})
+        switch(waifu.husbandoId){
+          case "Weekly":
+            if(waifu.appearDate.toDate() <= new Date())
+              poll.weekly.push({...waifu, waifuId: doc.id})
+            break;
+          case "Daily":
+            poll.daily.push({...waifu, waifuId: doc.id})
+            break;
+        }
       });
       
+      //order weeklies by appearDate
+      poll.weekly = _.orderBy(poll.weekly,['appearDate'], ['asc'])
       store.dispatch({
         type: SET_POLL_WAIFUS,
         payload: poll
@@ -580,7 +609,7 @@ export async function setRealTimeListeners(userId){
   
   var unSubWeeklyPoll = firebase.firestore().doc("poll/weekly").onSnapshot(function(doc) {
     try{
-      var pollObj = {...doc.data()};
+      var pollObj = {...doc.data(), type: "weekly"};
       store.dispatch({
         type: SET_WEEKLY_POLL,
         payload: pollObj
@@ -598,7 +627,7 @@ export async function setRealTimeListeners(userId){
   
   var unSubDailyPoll = firebase.firestore().doc("poll/daily").onSnapshot(function(doc) {
     try{
-      var pollObj = {...doc.data()};
+      var pollObj = {...doc.data(), type: "daily"};
 
       store.dispatch({
         type: SET_DAILY_POLL,
@@ -615,13 +644,20 @@ export async function setRealTimeListeners(userId){
     // store.dispatch({ type: STOP_LOADING_UI });
   });
   
-  var unSubGauntlet = firebase.firestore().collection("gauntlet").onSnapshot(function(querySnapshot) {
+  var unSubGauntlet = firebase.firestore().collection("gauntlet")
+  .onSnapshot(function(querySnapshot) {
     try{
       var bosses = [];
       querySnapshot.forEach(function(doc) {
-        bosses.push({bossId: doc.id , ...doc.data()});
+        var boss = doc.data();
+        var now = firebase.firestore.Timestamp.now().toDate()
+
+        if(boss.appearTime.toDate() <= now && now <= boss.leaveTime.toDate()){
+          bosses.push({bossId: doc.id , ...boss});
+        }
       });
 
+      bosses = _.orderBy(bosses,['appearTime'], ['asc'])
       store.dispatch({
         type: SET_GAUNTLET,
         payload: bosses

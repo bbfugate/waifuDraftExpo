@@ -13,6 +13,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@expo/traveling-fastlane-linux": "^1.15.1",
     "@expo/vector-icons": "^10.0.6",
     "@google-cloud/storage": "^5.0.1",
     "@material-ui/core": "^4.9.7",
@@ -29,7 +30,7 @@
     "axios": "^0.19.2",
     "chroma-js": "^2.1.0",
     "cors": "^2.8.5",
-    "expo": "~37.0.9",
+    "expo": "^37.0.12",
     "expo-asset": "~8.1.0",
     "expo-av": "~8.1.0",
     "expo-constants": "~9.0.0",
@@ -38,6 +39,7 @@
     "expo-linear-gradient": "~8.1.0",
     "expo-linking": "^1.0.1",
     "expo-splash-screen": "^0.2.3",
+    "expo-updates": "~0.2.1",
     "expo-web-browser": "~8.2.0",
     "fbgraph": "^1.4.4",
     "firebase": "^7.9.0",
@@ -84,8 +86,8 @@
     "redux-firestore": "^0.13.0",
     "redux-thunk": "^2.3.0",
     "redux-watch": "^1.1.1",
-    "styled-components": "^5.0.1",
-    "expo-updates": "~0.2.1"
+    "ruby": "^0.6.1",
+    "styled-components": "^5.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.8.6",

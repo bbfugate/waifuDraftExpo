@@ -122,10 +122,10 @@ class Layout extends Component {
 			}
 			catch (e) {
 				// handle or log error
-				store.dispatch({
-					type: SET_SNACKBAR,
-					payload: { type: "error", message: "Error Applying Update" }
-				});
+				// store.dispatch({
+				// 	type: SET_SNACKBAR,
+				// 	payload: { type: "error", message: "Error Applying Update" }
+				// });
 			}
 		}
 		else{
@@ -176,8 +176,6 @@ class Layout extends Component {
 
 			if (existingStatus !== 'granted') {
 				const { status } = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-				
-				store.dispatch({type: SET_SNACKBAR, payload: {type:"warning", message: status}});
 				finalStatus = status;
 			}
 
@@ -188,7 +186,6 @@ class Layout extends Component {
 			
 			token = await Notifications.getExpoPushTokenAsync();
 			
-			store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: token}});
 			await firebase.firestore().doc(`users/${userId}`).get()
 			.then((userRef) => {
 				var user = userRef.data();
@@ -198,7 +195,7 @@ class Layout extends Component {
 				}
 			})
 			.catch((err) => {
-				store.dispatch({type: SET_SNACKBAR, payload: {type:"error", message: "cant set token"}});
+				// store.dispatch({type: SET_SNACKBAR, payload: {type:"error", message: "cant set token"}});
 			})
 
 			if (Platform.OS === 'android') {
@@ -211,7 +208,7 @@ class Layout extends Component {
 			}
 		}
 		catch(err){
-			store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: "Error getting permissions"}});
+			// store.dispatch({type: SET_SNACKBAR, payload: {type:"info", message: "Error getting permissions"}});
 			await firebase.firestore().collection("logs").add({log: err, timestamp: new Date()})
 			.catch((err) => {
 				store.dispatch({type: SET_SNACKBAR, payload: {type:"error", message: "Error adding error log"}});

@@ -8,6 +8,7 @@ import _ from 'lodash'
 import store from '../redux/store';
 import watch from 'redux-watch'
 
+const mutedIcon = require('../assets/images/muteNotif.png');
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
 
@@ -52,6 +53,12 @@ function Row({ item, index, selectChat }){
             : <></>
           }
         </View>
+          
+        {
+          item.muted.includes(user.userId) ?
+            <Image source={mutedIcon} style={{height:25, width: 25, position:"absolute", top: 10, right: 10}} />
+          :<></>
+        }
       </ImageBackground>
     </TouchableOpacity>
   );

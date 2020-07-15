@@ -10,6 +10,8 @@ import Swiper from 'react-native-swiper'
 import NumericInput from 'react-native-numeric-input'
 
 import TopVote from '../assets/images/TopVote.png'
+
+import Countdown from '../components/CountDown'
 import AMCharDetails from '../components/AMCharDetails'
 import ComicCharDetails from '../components/ComicCharDetails'
 import {submitVote} from '../redux/actions/dataActions'
@@ -42,10 +44,22 @@ function VoteRow({ vote, pollType, isActive, otherUsers }) {
 export default class VoteDetails extends Component {
   constructor(props){
     super();
-    this.state ={
+
+    var isActive = false;
+    switch(props.route.params.poll.type){
+      case "weekly":
+        isActive = props.route.params.waifu.leaveDate.toDate() > new Date()
+        break;
+      case "daily":
+        isActive = props.route.params.poll.activeTill > new Date()
+        break;
+    }
+
+    this.state = {
+      isActive,
       navigation: props.navigation,
       poll: props.route.params.poll,
-      pollType: props.route.params.poll.firstVote != null ? "weekly" : "daily",
+      pollType: props.route.params.poll.type,
       waifu: props.route.params.waifu,
       userInfo: store.getState().user.credentials,
       otherUsers: store.getState().user.otherUsers,
@@ -88,7 +102,16 @@ export default class VoteDetails extends Component {
         }
       }
 
-      this.setState({waifu:newWaifu, poll:newPoll, topVote})
+      var isActive = false;
+      switch(this.state.pollType){
+        case "weekly":
+          isActive = newWaifu.leaveDate.toDate() > new Date()
+          break;
+        case "daily":
+          isActive = newPoll.activeTill > new Date()
+          break;
+      }
+      this.setState({isActive, waifu: newWaifu, poll: newPoll, topVote})
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
@@ -119,6 +142,16 @@ export default class VoteDetails extends Component {
           topVote = votes[0]
         }
       }
+    }
+
+    var isActive = false;
+    switch(this.state.pollType){
+      case "weekly":
+        isActive = updtWaifu.leaveDate.toDate() > new Date()
+        break;
+      case "daily":
+        isActive = updtPoll.activeTill > new Date()
+        break;
     }
 
     this.setState({
@@ -184,6 +217,26 @@ export default class VoteDetails extends Component {
   };
   
   render(){
+    var currVote = 0;
+    var validVote = true;
+    var minPoints = 1;
+    if(this.state.waifu.husbandoId == "Weekly" && 
+      !_.isEmpty(this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)) &&
+      this.state.topVote.vote != "None")
+    {
+      var voteObj = this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)[0]
+      currVote = voteObj.vote;
+
+      if(voteObj.vote < this.state.topVote.vote){
+        minPoints = this.state.topVote.vote - voteObj.vote + 1
+      }
+    }
+    
+    if(this.state.waifu.husbandoId == "Weekly")
+      validVote = (currVote + this.state.voteCount) <= this.state.topVote.vote || this.state.voteCount > this.state.userInfo.points
+    else
+      validVote = this.state.voteCount > minPoints
+
     return (
       <View style={[styles.container]}>
         <ImageBackground blurRadius={.45} style={[styles.imageContainer]} source={{uri: this.state.waifu.img}}>
@@ -197,6 +250,11 @@ export default class VoteDetails extends Component {
             >
               {/* Vote List */}
               <View style={{flex:1}}>
+                <View style={[styles.countDown]}>
+                  <Countdown activeTill={this.state.waifu.husbandoId == "Daily" ? this.state.poll.activeTill : this.state.waifu.leaveDate.toDate()}
+                    type={this.state.waifu.husbandoId.toUpperCase()} isActive={this.state.poll.isActive} />
+                </View>
+
                 <View style={styles.topVoteContainer}>
                   <Image style={styles.topVote} source={TopVote} />
                   <View style={styles.topVoteImg}>
@@ -204,7 +262,7 @@ export default class VoteDetails extends Component {
                   </View>
                   <Text style={styles.topVoteCount}>{this.state.topVote.vote}</Text>
                 </View>
-
+                
                 <View style={[styles.voteView]}>
                   <FlatList
                     data={this.state.pollType == "daily" && this.state.poll.isActive ? _.shuffle(this.state.waifu.votes) : _.orderBy(this.state.waifu.votes, ['vote'], ['desc'])}
@@ -220,13 +278,13 @@ export default class VoteDetails extends Component {
                   />
                   
                   {
-                    this.state.poll.isActive && this.state.userInfo.points > 0 ?
+                    this.state.isActive && this.state.userInfo.points > 0 ?
                       <View style={{height: 50, flexDirection: "row" , alignItems:"center", justifyContent:"center"}}>
                         <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
                           <NumericInput value={this.state.voteCount} 
                             onChange={value => this.setState({voteCount: value})}
                             rounded
-                            minValue={0} 
+                            minValue={minPoints} 
                             maxValue={this.state.userInfo.points}
                             totalHeight={35}
                             leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
@@ -246,12 +304,15 @@ export default class VoteDetails extends Component {
                           />
                         </View>
                         <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
-                          <Button disabled={this.state.voteCount == 0}
+                          <Button
+                            disabled={validVote}
                             mode="contained"
                             color={chroma('aqua').hex()}
                             style={{ fontFamily:"Edo", flex: .75, width: width/2.5 }}
                             onPress={() => this.submitVote(this.state.voteCount, this.state.waifu)}
-                          >Submit Vote</Button>
+                          >
+                            Submit Vote
+                          </Button>
                         </View>
                       </View>
                     :<></>
@@ -287,9 +348,13 @@ const styles = StyleSheet.create({
   imageContainer: {
     flex: 1,
   },
+  countDown:{
+    height: 80,
+    width: width,
+  },
   topVoteContainer: {
     width: width,
-    height: 250,
+    height: 150,
     justifyContent:"center",
     alignItems: "center",
     position:"relative"
@@ -324,7 +389,9 @@ const styles = StyleSheet.create({
     width: width,
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
-    backgroundColor:"rgba(255,255,255,.5)",
+    borderColor: chroma('black').alpha(.25),
+    borderWidth: 3,
+    backgroundColor: chroma('white').alpha(.65),
     justifyContent: "center",
     alignItems:"center"
   },

@@ -27,6 +27,7 @@ import RankBackground from '../components/RankBackGround'
 import { submitTrade } from '../redux/actions/dataActions';
 
 const chroma = require('chroma-js')
+const favoriteHeart = require('../assets/images/FavoriteHeart.png')
 const { width, height } = Dimensions.get('window');
 
 export default class NewTrade extends Component {
@@ -37,6 +38,7 @@ export default class NewTrade extends Component {
     this.state = {
       navigation: props.navigation,
 			loading: store.getState().data.loading,
+      waifuList: store.getState().data.waifuList,
       pollIsActive: store.getState().data.poll.weekly.isActive,
       userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
       otherUser: props.route.params.otherUser,
@@ -72,7 +74,7 @@ export default class NewTrade extends Component {
     let userReducerWatch = watch(store.getState, 'user')
 
     this.dataUnsubscribe = store.subscribe(dataReducerWatch((newVal, oldVal, objectPath) => {
-			this.setState({ pollIsActive: newVal.poll.weekly.isActive })
+			this.setState({ pollIsActive: newVal.poll.weekly.isActive, waifuList: newVal.waifuList  })
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
@@ -83,6 +85,7 @@ export default class NewTrade extends Component {
     var otherUser = store.getState().user.otherUsers;
     this.setState({
       userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
+      waifuList: store.getState().data.waifuList,
       otherUser: otherUser.filter(x => x.userId == this.state.otherUser.userId)[0],
       pollIsActive: store.getState().data.poll.weekly.isActive,
     })
@@ -189,6 +192,16 @@ export default class NewTrade extends Component {
   }
 
   render(){
+    var userWaifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.userInfo.waifus.includes(x.waifuId));
+    var userWaifuGroups = _.chain(userWaifus).groupBy(waifu => Number(waifu.rank))
+    .map((waifus, rank) => ({ rank: Number(rank), waifus })).orderBy(group => Number(group.rank), ['desc']).value()
+    userWaifus = userWaifuGroups.flatMap(x => x.waifus)
+    
+    var otherUserWaifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.otherUser.waifus.includes(x.waifuId));
+    var otherUserWaifuGroups = _.chain(otherUserWaifus).groupBy(waifu => Number(waifu.rank))
+    .map((waifus, rank) => ({ rank: Number(rank), waifus })).orderBy(group => Number(group.rank), ['desc']).value()
+    otherUserWaifus = otherUserWaifuGroups.flatMap(x => x.waifus)
+
     return (
       <>
         {this.state.loading ?
@@ -355,7 +368,7 @@ export default class NewTrade extends Component {
 
                 <FlatGrid
                   itemDimension={150}
-                  items={this.state.userInfo.waifus}
+                  items={userWaifus}
                   style={styles.gridView}
                   // staticDimension={300}
                   // fixed
@@ -575,12 +588,13 @@ export default class NewTrade extends Component {
 
                 <FlatGrid
                   itemDimension={150}
-                  items={this.state.otherUser.waifus}
+                  items={otherUserWaifus}
                   style={styles.gridView}
                   // staticDimension={300}
                   // fixed
                   spacing={20}
                   renderItem={({item, index}) => {
+                    var isFav = this.state.userInfo.wishList.includes(item.link)
                     var isSelected = this.state.tradeTo.waifus.includes(item.waifuId)
                     var rankColor = ""
                     switch(item.rank){
@@ -603,6 +617,14 @@ export default class NewTrade extends Component {
                         onPress={() => this.selectWaifu('to', item)}
                         style={[styles.itemContainer]}
                       >
+                        {
+                          isFav ?
+                            <View style={{ height:25, width: 25, position:"absolute", zIndex: 3, top: 5, right: 5 }}>
+                              <Image style={{height:25, width: 25}} source={favoriteHeart} />
+                            </View>
+                          : <></>
+                        }
+
                         <View style={styles.statView}>
                           <View style={styles.statRow}>
                             <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
@@ -699,10 +721,11 @@ export default class NewTrade extends Component {
                     <View style={{flex: 1, width: width}}>
                       <FlatGrid
                         itemDimension={150}
-                        items={this.state.userInfo.waifus.filter(x => this.state.tradeFrom.waifus.includes(x.waifuId))}
+                        items={userWaifus.filter(x => this.state.tradeFrom.waifus.includes(x.waifuId))}
                         style={styles.gridView}
                         spacing={20}
                         renderItem={({item, index}) => {
+                          var isFav = this.state.userInfo.wishList.includes(item.link)
                           var rankColor = ""
                           switch(item.rank){
                             case 1:
@@ -721,6 +744,14 @@ export default class NewTrade extends Component {
 
                           return(
                             <View style={[styles.itemContainer]}>
+                              {
+                                isFav ?
+                                  <View style={{ height:25, width: 25, position:"absolute", zIndex: 3, top: 5, right: 5 }}>
+                                    <Image style={{height:25, width: 25}} source={favoriteHeart} />
+                                  </View>
+                                : <></>
+                              }
+
                               <View style={styles.pointsView}>
                                 <View style={styles.statRow}>
                                   <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
@@ -792,10 +823,11 @@ export default class NewTrade extends Component {
                     <View style={{flex: 1, width: width}}>
                       <FlatGrid
                         itemDimension={150}
-                        items={this.state.otherUser.waifus.filter(x => this.state.tradeTo.waifus.includes(x.waifuId))}
+                        items={otherUserWaifus.filter(x => this.state.tradeTo.waifus.includes(x.waifuId))}
                         style={styles.gridView}
                         spacing={20}
                         renderItem={({item, index}) => {
+                          var isFav = this.state.userInfo.wishList.includes(item.link)
                           var rankColor = ""
                           switch(item.rank){
                             case 1:
@@ -814,6 +846,14 @@ export default class NewTrade extends Component {
 
                           return(
                             <View style={[styles.itemContainer]}>
+                              {
+                                isFav ?
+                                  <View style={{ height:25, width: 25, position:"absolute", zIndex: 3, top: 5, right: 5 }}>
+                                    <Image style={{height:25, width: 25}} source={favoriteHeart} />
+                                  </View>
+                                : <></>
+                              }
+
                               <View style={styles.statView}>
                                 <View style={styles.statRow}>
                                   <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
@@ -870,7 +910,7 @@ export default class NewTrade extends Component {
             </Swiper>
             
             <FAB
-              //small
+              small
               color="white"
               style={styles.fab}
               icon="close"

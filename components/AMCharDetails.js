@@ -106,11 +106,6 @@ const AMCharDetails = ({ card }) => {
       > */}
 
         <View style={styles.container} onLayout={onLayout}>
-          {/* Name */}
-          <View style={styles.nameView}>
-            <Text style={[styles.text,styles.nameText, styles.titleShadow,{fontSize: 45}]}>{card.name}</Text>
-          </View>
-
           {/* Tags */}
           {/* <View style={{height: 150}}>
             <View  style={{height: 50}}>

@@ -6,7 +6,7 @@ import { Feather } from '@expo/vector-icons';
 
 import _ from 'lodash'
 import lz from "lz-string";
-import { addNewChat, updateMessages, leaveGroupChat } from '../redux/actions/chatActions'
+import { addNewChat, updateMessages, leaveGroupChat, toggleMute } from '../redux/actions/chatActions'
 
 import store from '../redux/store'
 import watch from 'redux-watch'
@@ -36,6 +36,7 @@ export default class ViewChat extends Component {
     
     this.onSend = this.onSend.bind(this)
     this.leaveChat = this.leaveChat.bind(this)
+    this.toggleMute = this.toggleMute.bind(this)
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
   }
@@ -93,9 +94,7 @@ export default class ViewChat extends Component {
     var chat = _.cloneDeep(this.state.chat);
     var messages = GiftedChat.append(chat.messages, messages);
     var encryptMsgs = messages.map(x => lz.compressToUTF16(JSON.stringify(x)))
-
     chat.messages = encryptMsgs;
-    chat.modifiedDate = new Date();
     
     if(this.chatId == null){
       this.chatId = await addNewChat(chat);
@@ -113,34 +112,44 @@ export default class ViewChat extends Component {
     this.state.navigation.goBack()
   }
 
+  async toggleMute(){
+    toggleMute(this.chatId, this.state.userInfo.userId)
+  }
+  
   render(){
     return (
       <View style={[styles.container]}>
         <ImageBackground source={{uri: this.chatImg ?? this.state.otherUsers[0].img}} style={{flex:1}} imageStyle={{opacity: .5}} blurRadius={.5} resizeMode="cover">
           <View style={{width: width, padding: 8, backgroundColor: chroma('white')}}>
-            {
-              this.isGroupChat ?
-                <View style={{width: 50, height: 50, position: "absolute", zIndex: 2, right: 0, top: 5,
-                  flexDirection: 'row',
-                  justifyContent: 'center'}}
-                >
-                  <Menu
-                    visible={this.state.showOptions}
-                    onDismiss={() => this.setState({showOptions: false})}
-                    anchor={
-                      <Button onPress={() => this.setState({showOptions: true})}>
-                        <Feather name="settings" size={24} color="black" />
-                      </Button>
-                    }
-                  >
+            <View style={{width: 50, height: 50, position: "absolute", zIndex: 2, right: 0, top: 5,
+              flexDirection: 'row',
+              justifyContent: 'center'}}
+            >
+              <Menu
+                visible={this.state.showOptions}
+                onDismiss={() => this.setState({showOptions: false})}
+                anchor={
+                  <Button onPress={() => this.setState({showOptions: true})}>
+                    <Feather name="settings" size={24} color="black" />
+                  </Button>
+                }
+              >
+                {
+                  this.state.chat.chatId != null ?
+                    <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={() => this.toggleMute()}
+                      title={this.state.chat.muted.includes(this.state.userInfo.userId) ? "Unmute Chat" : "Mute Chat"} />
+                  :<></>
+                }
+                {
+                  this.isGroupChat ?
                     <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={this.leaveChat} title="Leave Chat" />
-                  </Menu>
-                </View>
-              : <></>
-            }
-              <View style={{height: "auto"}}>
-                <Text style={[styles.text, {color:"black"}]}>{this.chatName ?? this.state.otherUsers[0].userName}</Text>
-              </View>
+                  : <></>
+                }
+              </Menu>
+            </View>
+            <View style={{height: "auto"}}>
+              <Text style={[styles.text, {color:"black"}]}>{this.chatName ?? this.state.otherUsers[0].userName}</Text>
+            </View>
           </View>
 
           <GiftedChat

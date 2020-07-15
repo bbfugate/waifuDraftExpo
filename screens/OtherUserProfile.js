@@ -9,6 +9,7 @@ import Swiper from 'react-native-swiper'
 //Media
 import defIcon from '../assets/images/defIcon.png'
 import atkIcon from '../assets/images/atkIcon.png'
+const favoriteHeart = require('../assets/images/FavoriteHeart.png')
 
 //Redux
 import store from '../redux/store';
@@ -42,12 +43,14 @@ export default class OtherUserProfile extends Component {
     super();
     this.mounted = true;
 
+    var waifuList = store.getState().data.waifuList;
     var trades = _.cloneDeep(store.getState().data.trades);
     trades = trades.filter(x => x.from.husbandoId == props.route.params.otherUser.userId || x.to.husbandoId == props.route.params.otherUser.userId)
       
     this.state = {
       navigation: props.navigation,
       otherUser: props.route.params.otherUser,
+      waifuList: waifuList,
 			loading: store.getState().data.loading,
       userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
       users: [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers),
@@ -62,6 +65,7 @@ export default class OtherUserProfile extends Component {
     this.startTrade = this.startTrade.bind(this)
     this.selectTrade = this.selectTrade.bind(this)
     this.selectWaifu = this.selectWaifu.bind(this)
+    this.openUserFavoritesScreen = this.openUserFavoritesScreen.bind(this)
   }
   
   setSubscribes(){
@@ -72,7 +76,7 @@ export default class OtherUserProfile extends Component {
       var trades = _.cloneDeep(newVal.trades);
       trades = trades.filter(x => x.from.husbandoId == this.state.otherUser.userId || x.to.husbandoId == this.state.otherUser.userId)
 
-			this.setState({ trades })
+			this.setState({ trades, waifuList: newVal.waifuList })
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
@@ -90,7 +94,8 @@ export default class OtherUserProfile extends Component {
       userInfo: {...store.getState().user.credentials, waifus: store.getState().user.waifus},
       otherUser: store.getState().user.otherUsers.filter(x => x.userId == this.state.otherUser.userId)[0],
       trades,
-      users
+      users,
+      waifuList: store.getState().data.waifuList
     })
   }
 
@@ -124,6 +129,11 @@ export default class OtherUserProfile extends Component {
   selectWaifu(waifu){
     this.state.navigation.navigate("OtherUserCharDetails", {waifu})
   }
+  
+  openUserFavoritesScreen(){
+    var userId = this.state.otherUser.userId
+    this.state.navigation.navigate("UserWaifuFavorites", {userId})
+  }
 
   startChat(){
     var chats = _.cloneDeep(store.getState().chat.chats);
@@ -132,7 +142,8 @@ export default class OtherUserProfile extends Component {
     if(_.isEmpty(existChat)){
       var chat = {
         users: [this.state.otherUser.userId, this.state.userInfo.userId],
-        messages: []
+        muted: [],
+        createdBy: this.state.userInfo.userId,
       }
   
       this.state.navigation.navigate("ViewChat", {chat})
@@ -144,13 +155,14 @@ export default class OtherUserProfile extends Component {
   }
 
   render(){
-    var waifuGroups = _.chain(_.cloneDeep(this.state.otherUser.waifus))
+    var waifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.otherUser.waifus.includes(x.waifuId));
+    var waifuGroups = _.chain(waifus)
     .groupBy(waifu => Number(waifu.rank))
     .map((waifus, rank) => ({ rank: Number(rank), waifus }))
     .orderBy(group => Number(group.rank), ['desc'])
     .value()
 
-    const waifus = waifuGroups.flatMap(x => x.waifus)
+    waifus = waifuGroups.flatMap(x => x.waifus)
 
     return (
       <>
@@ -187,6 +199,14 @@ export default class OtherUserProfile extends Component {
                     onPress={this.startTrade}
                   >Start Trade</Button>
                 </View>
+              
+                <FAB
+                  //small
+                  color="white"
+                  style={styles.fab}
+                  icon="message-text-outline"
+                  onPress={this.startChat}
+                />
               </View>
             
               <View style={styles.waifuListView}>
@@ -263,6 +283,7 @@ export default class OtherUserProfile extends Component {
                   // fixed
                   spacing={20}
                   renderItem={({item, index}) => {
+                    var isFav = this.state.userInfo.wishList.includes(item.link)
                     var rankColor = ""
                     switch(item.rank){
                       case 1:
@@ -281,6 +302,14 @@ export default class OtherUserProfile extends Component {
 
                     return(
                       <TouchableOpacity activeOpacity={.25} onPress={() => this.selectWaifu(item)} style={styles.itemContainer}>
+                        {
+                          isFav ?
+                            <View style={{ height:25, width: 25, position:"absolute", zIndex: 3, top: 5, right: 5 }}>
+                              <Image style={{height:25, width: 25}} source={favoriteHeart} />
+                            </View>
+                          : <></>
+                        }
+
                         <View style={styles.statView}>
                           <View style={styles.statRow}>
                             <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
@@ -308,16 +337,16 @@ export default class OtherUserProfile extends Component {
                     )
                   }}
                 />
+                
+                <FAB
+                  small
+                  color="white"
+                  style={styles.favFab}
+                  icon="heart-box"
+                  onPress={() => this.openUserFavoritesScreen()}
+                />
               </View>
             </Swiper>
-            
-            <FAB
-              //small
-              color="white"
-              style={styles.fab}
-              icon="message-text-outline"
-              onPress={this.startChat}
-            />
           </View>
         }
       </>
@@ -446,4 +475,11 @@ const styles = StyleSheet.create({
     top: 0,
     backgroundColor: chroma('aqua').hex()
   },
+  favFab: {
+    position: 'absolute',
+    zIndex: 10,
+    margin: 5,
+    right: 0,
+    top: 0
+  }
 })

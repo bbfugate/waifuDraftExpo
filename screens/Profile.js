@@ -1,21 +1,24 @@
 import React, { Component, PureComponent, createRef, forwardRef } from 'react';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
-import { Text, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
+import { Text, FAB, TouchableRipple, Card, Button, Modal, TextInput } from 'react-native-paper';
 import { FlatGrid } from 'react-native-super-grid';
 
 import _ from 'lodash'
+import ls from 'lz-string';
 import Swiper from 'react-native-swiper'
 
 import UserProfileImg from '../components/UserProfileImg'
 import { MaterialIcons } from '@expo/vector-icons';
 
 //Firebase
-import firebase from 'firebase/app'
+import firebase, { firestore } from 'firebase/app'
 import 'firebase/auth'
 
 //Media
 import defIcon from '../assets/images/defIcon.png'
 import atkIcon from '../assets/images/atkIcon.png'
+import ChestOpen from '../assets/images/ChestOpen.gif'
+import ChestShake from '../assets/images/ChestShake.gif'
 
 //Redux
 import store from '../redux/store';
@@ -37,6 +40,56 @@ import RankBackground from '../components/RankBackGround'
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
 
+function setDay(date, dayOfWeek) {
+  let Rdate = new Date(date.getTime());
+  Rdate.setDate(Rdate.getDate() + (dayOfWeek + 7 - Rdate.getDay()) % 7);
+  return Rdate;
+}
+
+function getRankByVotes(voteCount){
+  var rank = 1;
+  if (voteCount < 50){
+    rank = 1
+  }
+  else if(voteCount >= 50 && voteCount <= 75){
+    rank = 2
+  }
+  else if(voteCount >= 76 && voteCount <= 150){
+    rank = 3
+  }
+  else if(voteCount > 150){
+    rank = 4
+  }
+
+  return rank;
+}
+
+function getBaseStats(rank) {
+  let stats = {
+    attack: 1,
+    defense: 1
+  };
+  switch (rank) {
+    case 1:
+      stats.attack = 3;
+      stats.defense = 1;
+      break;
+    case 2:
+      stats.attack = 7;
+      stats.defense = 5;
+      break;
+    case 3:
+      stats.attack = 12;
+      stats.defense = 10;
+      break;
+    case 4:
+      stats.attack = 20;
+      stats.defense = 15;
+      break;
+  }
+  return stats;
+}
+
 export default class Profile extends Component {
   constructor(props) {
     super();
@@ -50,6 +103,7 @@ export default class Profile extends Component {
     this.state = {
       navigation: props.navigation,
 			loading: store.getState().data.loading,
+      waifuList: store.getState().data.waifuList,
       userInfo: store.getState().user.credentials,
       waifus: store.getState().user.waifus,
       users: [{...store.getState().user.credentials, waifus: store.getState().user.waifus }].concat(store.getState().user.otherUsers),
@@ -64,6 +118,7 @@ export default class Profile extends Component {
       pin: null,
       newPass: null,
       newConfPass: null,
+      chestOpen: false,
       size: {width,height}
     };
 
@@ -78,6 +133,10 @@ export default class Profile extends Component {
 
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
+    this.checkDailyBonus = this.checkDailyBonus.bind(this)
+    
+    this.addNewDaily = this.addNewDaily.bind(this)
+    this.openUserFavoritesScreen = this.openUserFavoritesScreen.bind(this)
   }
   
   setSubscribes(){
@@ -89,14 +148,13 @@ export default class Profile extends Component {
       trades = trades.filter(x => x.from.husbandoId == this.state.userInfo.userId || x.to.husbandoId == this.state.userInfo.userId)
 
       var userInfo = this.state.userInfo;
-      userInfo.waifus = newVal.waifuList.filter(x => x.husbandoId == this.state.userInfo.userId);
 
       var selectedWaifu = null;
       if(this.state.selectedWaifu != null){
         selectedWaifu = newVal.waifuList.filter(x => x.waifuId == this.state.selectedWaifu.waifuId)[0]
       }
 
-			this.setState({ userInfo, selectedWaifu, trades})
+			this.setState({ userInfo, selectedWaifu, trades, waifuList: newVal.waifuList })
     }))
 
     this.userUnsubscribe = store.subscribe(userReducerWatch((newVal, oldVal, objectPath) => {
@@ -107,7 +165,6 @@ export default class Profile extends Component {
       }
 
       this.setState({userInfo: newVal.credentials, waifus: newVal.waifus, selectedWaifu, users })
-      // this.setState({userInfo: {...newVal.credentials, waifus: newVal.waifus }, selectedWaifu, users: newVal.otherUsers })
     }))
     
     var trades = _.cloneDeep(store.getState().data.trades);
@@ -118,7 +175,8 @@ export default class Profile extends Component {
       users,
       trades,
       userInfo: store.getState().user.credentials,
-      waifus: store.getState().user.waifus
+      waifus: store.getState().user.waifus,
+      waifuList: store.getState().data.waifuList
     })
   }
 
@@ -248,14 +306,290 @@ export default class Profile extends Component {
     this.setState({ reAuthSuc: result });
   }
 
+  async addNewDaily(){
+    var compressSearchJson = require('../assets/SearchFile.json');
+    var searchJson = JSON.parse(ls.decompress(compressSearchJson));
+
+    var waifuLinks = await firebase.firestore().collection('waifus').get()
+    .then((docs) => {
+      var links = []
+      docs.forEach(x => {
+        links.push(x.data().link)
+      })
+
+      return links
+    });
+
+    const characters = searchJson.characters;
+    characters['Anime-Manga'].items = characters['Anime-Manga'].items.filter(x => !waifuLinks.includes(x.link));
+    characters['Marvel'].items = characters['Marvel'].items.filter(x => !waifuLinks.includes(x.link));
+    characters['DC'].items = characters['DC'].items.filter(x => !waifuLinks.includes(x.link));
+
+    var newWaifu = null;
+    while (newWaifu == null) {
+      var newWaifu = this.getRandWaifu(characters);
+      if (newWaifu.publisher != null)
+        newWaifu.type = newWaifu.publisher;
+      else
+        newWaifu.type = "Anime-Manga";
+
+      newWaifu.rank = 1;
+      newWaifu.attack = 3;
+      newWaifu.defense = 1;
+      newWaifu.husbandoId = "Daily";
+      newWaifu.submittedBy = "System";
+      newWaifu.votes = [];
+    }
+
+    await firebase.firestore().collection('waifus').add(newWaifu)
+    .then(doc => {
+      newWaifu.waifuId = doc.id
+      return firebase.firestore().collection('waifuPoll').add(newWaifu);
+    });
+  }
+
+  getRandWaifu(characters) {
+    let randChanceList = _.fill(Array(50), 1).concat(_.fill(Array(25), 2)).concat(_.fill(Array(25), 3));
+    let randItem = _.shuffle(randChanceList)[Math.floor(Math.random() * randChanceList.length)];
+    let charSet = [];
+    switch (randItem) {
+      case 1:
+        charSet = characters['Anime-Manga'].items;
+        break;
+      case 2:
+        charSet = characters['Marvel'].items;
+        break;
+      case 3:
+        charSet = characters['DC'].items;
+        break;
+    }
+    return _.shuffle(charSet)[Math.floor(Math.random() * charSet.length)];
+  }
+
+  addWishList(){
+    firebase.firestore().collection("waifuPoll").where("husbandoId", "==", "Weekly").get()
+    .then(async (data) => {
+      data.forEach(rec => {
+        rec.ref.delete()
+          .catch((err) => {
+            return firebase.firestore().collection('pollLogs').add({
+              log: err.message,
+              timestamp: firebase.firestore.Timestamp.now()
+            });
+          });
+      });
+    })
+    .then(async () => {
+      var newPollWaifus = [];
+      const users = (await firebase.firestore().collection('users').get()).docs.map(x => x.data());
+      console.log(users)
+      
+      const waifuLinks = (await firebase.firestore().collection('waifus').get()).docs.map(x => x.data().link);
+      var compressSearchJson = require('../assets/SearchFile.json');
+      var waifuDataList = JSON.parse(ls.decompress(compressSearchJson));
+      
+      const characters = waifuDataList.characters;
+      characters['Anime-Manga'].items = characters['Anime-Manga'].items.filter(x => !waifuLinks.includes(x.link));
+      characters['Marvel'].items = characters['Marvel'].items.filter(x => !waifuLinks.includes(x.link));
+      characters['DC'].items = characters['DC'].items.filter(x => !waifuLinks.includes(x.link));
+
+      var amChars = characters['Anime-Manga'].items;
+      amChars.map(x => x.type ="Anime-Manga")
+
+      var comicChars = characters['Marvel'].items.concat(characters['DC'].items);
+      comicChars.map(x => x.type = x.publisher)
+
+      var chars = amChars.concat(comicChars);
+      var topChars = [];
+      var topAM = _.take(_.sortBy(_.cloneDeep(chars.filter(x => x.type == "Anime-Manga")), ['popRank']), 500);
+      var topComic = _.take(_.sortBy(_.cloneDeep(chars.filter(x => x.type != "Anime-Manga"))), 500)
+      topChars = topAM.concat(topComic)
+
+      var flatWishList = users.flatMap(x => x.wishList).filter(x => !waifuLinks.includes(x));
+      wishListChars = _.cloneDeep(chars).filter(x => flatWishList.includes(x.link));
+
+      var appearDate = new Date();
+      appearDate.setHours(14,0,0)
+
+      while(newPollWaifus.length < 5){
+        var newWaifu = {}
+        var randWaifuList = [];
+        var validWaifuList = _.cloneDeep(wishListChars).filter(x => !newPollWaifus.map(y => y.link).includes(x.link));
+
+        //loop through each user and pick a character from their wishlist
+        users.forEach(user => {
+          if(!_.isEmpty(user.wishList)){
+            randWaifuList.push(user.wishList[_.random(user.wishList.length - 1)])
+          }
+        })
+
+        if(_.isEmpty(randWaifuList)){
+          newWaifu = topChars[_.random(topChars.length - 1)]
+        }
+        else{
+          var newWaifuLink = randWaifuList[_.random(randWaifuList.length-1)];
+          if (newPollWaifus.map(x => x.link).includes(newWaifuLink))
+            continue;
+            
+          newWaifu = validWaifuList.filter(x => x.link == newWaifuLink)[0];
+        }
+
+        var leaveDate = _.cloneDeep(appearDate);
+        leaveDate.setDate(leaveDate.getDate() + 2);
+        leaveDate.setHours(24,0,0)
+
+        newWaifu.appearDate = firebase.firestore.Timestamp.fromDate(appearDate)
+        newWaifu.leaveDate = firebase.firestore.Timestamp.fromDate(leaveDate)
+        
+        newWaifu.type = newWaifu.publisher || "Anime-Manga";
+        newPollWaifus.push(newWaifu);
+
+        appearDate.setDate(appearDate.getDate() + 1);
+      }
+
+      return newPollWaifus;
+    })
+    .then(async (waifus) => {
+      var pollWaifus = [];
+      waifus.forEach(async (x) => {
+        x.rank = 1;
+        x.attack = 3;
+        x.defense = 1;
+        x.husbandoId = "Weekly";
+        x.isActive = true;
+        x.submittedBy = "System";
+
+        await firebase.firestore().collection("waifus").add(Object.assign({}, x))
+          .then((data) => {
+            x.waifuId = data.id;
+            pollWaifus.push(x);
+          });
+      });
+      await firebase.firestore().collection("pollLogs").add({
+        log: "added waifus to poll array",
+        timestamp: firebase.firestore.Timestamp.fromDate(new Date())
+      })
+      .catch((err) => {
+        return firebase.firestore().collection('pollLogs').add({
+          log: err.message,
+          timestamp: firebase.firestore.Timestamp.fromDate(new Date())
+        });
+      });
+      return pollWaifus;
+    })
+    .then(async (waifus) => {
+      waifus.forEach(async (x) => {
+        x.votes = [];
+        await firebase.firestore().collection("waifuPoll").add(Object.assign({}, x))
+      });
+    })
+    .then(() => {
+      return firebase.firestore().collection("tasks").where("worker", "==", "closeWeeklyPoll").limit(1).get();
+    })
+    .then((data) => {
+      if (data.empty)
+        return null;
+      else {
+        var closeDate = new Date();
+        closeDate.setDate(closeDate.getDate() + 2);
+        closeDate.setHours(24,0,0)
+
+        return data.docs[0].ref.update({
+          performAt: firebase.firestore.Timestamp.fromDate(closeDate),
+          status: "scheduled"
+        });
+      }
+    })
+    .then(() => {
+      return firebase.firestore().collection("tasks").where("worker", "==", "closeWeeklyPollReminder").limit(1).get()
+    })
+    .then((data) => {
+      if(data.empty)
+        return null
+      else{
+        var closeRemindDate = setDay(firebase.firestore.Timestamp.now().toDate(), 7);
+        closeRemindDate.setHours(23,30,0)
+
+        return data.docs[0].ref.update({ performAt: firebase.firestore.Timestamp.fromDate(closeRemindDate), status: "scheduled" })
+      }
+    })
+    .then(() => {
+      return firebase.firestore().collection("pollLogs").add({
+        log: "Poll Has Been Opened",
+        timestamp: firebase.firestore.Timestamp.fromDate(new Date())
+      });
+    })
+    .catch((err) => {
+      return firebase.firestore().collection('pollLogs').add({
+        log: err.message,
+        timestamp: firebase.firestore.Timestamp.fromDate(new Date())
+      });
+    })
+  }
+
+  createWaifuBackUp(){
+    firebase.firestore().collection('waifus').get()
+    .then(async (docs) => {
+      var waifus = [];
+      docs.forEach(x => {
+        waifus.push({docId: x.id, ...x.data()})
+      });
+
+      (await firebase.firestore().collection('waifus-bk').get()).docs.map(x => x.ref.delete())
+      
+      waifus.forEach(async x => {
+        var id = x.docId;
+        var waifu = _.cloneDeep(x);
+        delete waifu.docId;
+
+        await firebase.firestore().collection('waifus-bk').doc(id).set(waifu);
+      })
+    })
+  }
+
+  openUserFavoritesScreen(){
+    var userId = this.state.userInfo.userId
+    this.state.navigation.navigate("UserWaifuFavorites", {userId})
+  }
+  
+  async checkDailyBonus(){
+    var user = this.state.userInfo;
+
+    if(user.dailyBonusRedeemed){
+      store.dispatch({
+        type: SET_SNACKBAR,
+        payload: {type: "warning", message: `You've Already Claimed Todays Bonus`}
+      });
+    }
+    else if(!this.state.chestOpen){
+      this.setState({chestOpen: true})
+
+      await firebase.firestore().doc(`users/${user.userId}`).get()
+      .then(doc => {
+        var points = doc.data().points;
+
+        return doc.ref.update({points: points + 5, dailyBonusRedeemed: true, streak: 0})
+      })
+      
+      setTimeout(function(){
+        store.dispatch({
+          type: SET_SNACKBAR,
+          payload: {type: "info", message: `Daily Bonus Collected! (5 Points)`}
+        });
+        this.setState({chestOpen: false})
+      }.bind(this), 1000)
+    }
+  }
+
   render(){
-    var waifuGroups = _.chain(_.cloneDeep(this.state.waifus))
+    var waifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.waifus.includes(x.waifuId));
+    var waifuGroups = _.chain(waifus)
     .groupBy(waifu => Number(waifu.rank))
     .map((waifus, rank) => ({ rank: Number(rank), waifus }))
     .orderBy(group => Number(group.rank), ['desc'])
     .value()
 
-    const waifus = waifuGroups.flatMap(x => x.waifus)
+    waifus = waifuGroups.flatMap(x => x.waifus)
 
     return (
       <>
@@ -295,6 +629,21 @@ export default class Profile extends Component {
                 </View>
               </View>
 
+              {!this.state.userInfo.dailyBonusRedeemed && !this.state.chestOpen ?
+                <TouchableOpacity activeOpacity={.5} onPress={() => this.checkDailyBonus()}
+                  style={{height: 150, width: width, alignItems:"center", justifyContent:"center"}}>
+                  <Image source={this.state.chestOpen ? ChestOpen : ChestShake} style={{height: 150, width:150}} />
+                </TouchableOpacity>
+              :<></>}
+
+              {
+                this.state.chestOpen ?
+                  <TouchableOpacity style={{height: 150, width: width, alignItems:"center", justifyContent:"center"}}>
+                    <Image source={this.state.chestOpen ? ChestOpen : ChestShake} style={{height: 150, width:150}} />
+                  </TouchableOpacity>
+                :<></>
+              }
+
               <View style={{height: 50, width: width}}>
                 <Button
                   mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
@@ -303,6 +652,29 @@ export default class Profile extends Component {
                   LogOut
                 </Button>
               </View>
+              
+              {
+                this.state.userInfo.isAdmin ?
+                  <View>
+                    <View style={{height: 50, width: width}}>
+                      <Button
+                        mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                        onPress={this.addWishList}
+                      >
+                        Add New Daily
+                      </Button>
+                    </View>
+                    <View style={{height: 50, width: width}}>
+                      <Button
+                        mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                        onPress={this.createWaifuBackUp}
+                      >
+                        Create Waifu BackUp
+                      </Button>
+                    </View>
+                  </View>
+                : <></>
+              }
             </View>
 
             <View style={styles.waifuListView}>
@@ -424,12 +796,19 @@ export default class Profile extends Component {
                   )
                 }}
               />
+
+              <FAB
+                small
+                color="white"
+                style={styles.favFab}
+                icon="heart-box"
+                onPress={() => this.openUserFavoritesScreen()}
+              />
             </View>
           </Swiper>
         }
 
-        
-        {/* UPdate User Info Modal */}
+        {/* Update User Info Modal */}
         <Modal
           animationType="slide"
           visible={this.state.showUpdateUserName == true || this.state.showEmailUpdate == true || this.state.showPasswordUpdate == true }
@@ -601,7 +980,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   userInfo: {
-    flex: 1,
+    height: 125,
     width: width,
     overflow: "hidden",
     shadowColor: '#000',
@@ -612,7 +991,7 @@ const styles = StyleSheet.create({
     justifyContent:"center"
   },
   userStatsView:{
-    flex: 3,
+    height:'auto',
     padding: 10,
     width: width,
     backgroundColor: chroma('black').alpha(.025),
@@ -666,5 +1045,12 @@ const styles = StyleSheet.create({
     fontFamily:"Edo",
     fontSize:25,
     marginLeft: 5
+  },
+  favFab: {
+    position: 'absolute',
+    zIndex: 10,
+    margin: 5,
+    right: 0,
+    top: 0
   }
 })

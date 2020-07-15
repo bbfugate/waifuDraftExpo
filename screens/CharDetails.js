@@ -21,7 +21,8 @@ const { width, height } = Dimensions.get('window');
 export default class CharDetails extends Component {
   constructor(props){
     super();
-    this.state ={
+
+    this.state = {
       navigation: props.navigation,
       poll: store.getState().data.poll.weekly,
       userInfo: store.getState().user.credentials,
@@ -55,10 +56,11 @@ export default class CharDetails extends Component {
       this.setState({userInfo: newVal.credentials})
     }))
     
+
     this.setState({
       userInfo: store.getState().user.credentials,
       poll: store.getState().data.poll.weekly,
-      waifu: store.getState().user.waifus.filter(x => x.waifuId == this.state.waifu.waifuId)[0]
+      waifu: store.getState().data.waifuList.filter(x => x.waifuId == this.state.waifu.waifuId)[0]
     })
   }
 
@@ -114,10 +116,16 @@ export default class CharDetails extends Component {
   }
 
   render(){
+    const waifu = this.state.waifu;
+
+    var displayName = waifu.name;
+    if(waifu.type != 'Anime-Manga')
+      displayName = `${waifu.name} ${waifu.currentAlias != "" && waifu.currentAlias != waifu.name && !waifu.name.includes(waifu.currentAlias) ? "- " + waifu.currentAlias : ""}`
+
     return (
       <View style={[styles.container]}>
-        <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: this.state.waifu.img}}>
-          <ImageBackground style={[styles.imageContainer]} imageStyle={{resizeMode:"contain"}} source={{uri: this.state.waifu.img}}>
+        <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: waifu.img}}>
+          <ImageBackground style={[styles.imageContainer]} imageStyle={{resizeMode:"contain"}} source={{uri: waifu.img}}>
             <View style={styles.bgView}>
               <Swiper
                 index={0}
@@ -127,17 +135,37 @@ export default class CharDetails extends Component {
               >
                 {/* Stats List */}
                 <View style={{flex:1}}>
+                  {/* Name */}
+                  <View style={styles.nameView}>
+                    <Text style={[styles.text,styles.nameText, styles.titleShadow,{fontSize: 45}]}>{displayName}</Text>
+
+                    <FAB
+                      small
+                      color="white"
+                      style={[styles.fab, {alignSelf: "center"}]}
+                      icon="link-variant"
+                      onPress={this.waifuLinkPress}
+                    />
+                    <FAB
+                      small
+                      color="white"
+                      style={styles.imgUpdtFab}
+                      icon="image"
+                      onPress={() => this.setState({showUpdateImg: true})}
+                    />
+                  </View>
+
                   <View style={styles.statsView}>
                     <View style={styles.statsRow}>
-                      <Text style={styles.statText}>ATK: {this.state.waifu.attack}</Text>
-                      <Text style={styles.statText}>DEF: {this.state.waifu.defense}</Text>
+                      <Text style={styles.statText}>ATK: {waifu.attack}</Text>
+                      <Text style={styles.statText}>DEF: {waifu.defense}</Text>
                     </View>
                   </View>
                   
                   <View style={styles.buttonRowView}>
                     <View style={styles.buttonItem}>
                       <Button onPress={() => this.setState({showRankCoinConf: true})}
-                        disabled={this.state.userInfo.rankCoins <= 0 || this.state.waifu.rank >= 4}
+                        disabled={this.state.userInfo.rankCoins <= 0 || waifu.rank >= 4}
                         mode={"contained"} color={chroma('aqua').hex()} 
                         labelStyle={{fontSize: 20, fontFamily: "Edo"}}
                       >
@@ -157,19 +185,11 @@ export default class CharDetails extends Component {
                       </Button>
                     </View>
                   </View>
-                          
-                  <FAB
-                    //small
-                    color="white"
-                    style={styles.imgUpdtFab}
-                    icon="image"
-                    onPress={() => this.setState({showUpdateImg: true})}
-                  />
                 </View>
               
                 {/* Details */}
                 <View style={styles.detailsView}>
-                  {this.state.waifu.type == "Anime-Manga" ? <AMCharDetails card={this.state.waifu}/> : <ComicCharDetails card={this.state.waifu} />}
+                  {waifu.type == "Anime-Manga" ? <AMCharDetails card={waifu}/> : <ComicCharDetails card={waifu} />}
                 </View>
               </Swiper>
             </View>
@@ -409,6 +429,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     elevation: 2,
   },
+  nameView:{
+    height: 'auto',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,.75)",
+  },
+  nameText:{
+    color:"white"
+  },
 	textField: {
     position: "absolute",
     bottom: 15,
@@ -447,16 +476,14 @@ const styles = StyleSheet.create({
 	},
   imgUpdtFab: {
     position: 'absolute',
-    margin: 8,
     left: 0,
-    top: 0,
+    top: '10%',
     backgroundColor: chroma('aqua').hex()
   },
   fab: {
     position: 'absolute',
-    margin: 8,
     right: 0,
-    top: 0,
+    top: '10%',
     backgroundColor: chroma('aqua').hex()
   },
   cancelFab: {

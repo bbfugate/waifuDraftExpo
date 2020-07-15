@@ -66,10 +66,16 @@ export default class OtherUserCharDetails extends Component {
   };
 
   render(){
+    const waifu = this.state.waifu;
+
+    var displayName = waifu.name;
+    if(waifu.type != 'Anime-Manga')
+      displayName = `${waifu.name} ${waifu.currentAlias != "" && waifu.currentAlias != waifu.name && !waifu.name.includes(waifu.currentAlias) ? "- " + waifu.currentAlias : ""}`
+
     return (
       <View style={[styles.container]}>
-        <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: this.state.waifu.img}}>
-          <ImageBackground style={[styles.imageContainer]} imageStyle={{resizeMode:"contain"}} source={{uri: this.state.waifu.img}}>
+        <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: waifu.img}}>
+          <ImageBackground style={[styles.imageContainer]} imageStyle={{resizeMode:"contain"}} source={{uri: waifu.img}}>
             <View style={styles.bgView}>
               <Swiper
                 index={0}
@@ -79,30 +85,37 @@ export default class OtherUserCharDetails extends Component {
               >
                 {/* Stats List */}
                 <View style={{flex:1}}>
+                  {/* Name */}
+                  <View style={styles.nameView}>
+                    <Text style={[styles.text,styles.nameText, styles.titleShadow,{fontSize: 45}]}>{displayName}</Text>
+
+                    <FAB
+                      small
+                      color="white"
+                      style={[styles.fab, {alignSelf: "center"}]}
+                      icon="link-variant"
+                      onPress={this.waifuLinkPress}
+                    />
+                  </View>
+
                   <View style={styles.statsView}>
                     <View style={styles.statsRow}>
-                      <Text style={styles.statText}>ATK: {this.state.waifu.attack}</Text>
-                      <Text style={styles.statText}>DEF: {this.state.waifu.defense}</Text>
+                      <Text style={styles.statText}>ATK: {waifu.attack}</Text>
+                      <Text style={styles.statText}>DEF: {waifu.defense}</Text>
                     </View>
                   </View>
+                  
+
                 </View>
               
                 {/* Details */}
                 <View style={styles.detailsView}>
-                  {this.state.waifu.type == "Anime-Manga" ? <AMCharDetails card={this.state.waifu}/> : <ComicCharDetails card={this.state.waifu} />}
+                  {waifu.type == "Anime-Manga" ? <AMCharDetails card={waifu}/> : <ComicCharDetails card={waifu} />}
                 </View>
               </Swiper>
             </View>
           </ImageBackground>
         </ImageBackground>
-
-        <FAB
-          //small
-          color="white"
-          style={styles.fab}
-          icon="link-variant"
-          onPress={this.waifuLinkPress}
-        />
       </View>
     );
   }
@@ -138,6 +151,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     elevation: 2,
   },
+  nameView:{
+    height: 'auto',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,.75)",
+  },
+  nameText:{
+    color:"white"
+  },
   text:{
     fontFamily: "Edo",
     fontSize: 30,
@@ -170,9 +192,8 @@ const styles = StyleSheet.create({
 	},
   fab: {
     position: 'absolute',
-    margin: 8,
-    right: 0,
-    top: 0,
+    right: 5,
+    top: 5,
     backgroundColor: chroma('aqua').hex()
   },
 });
