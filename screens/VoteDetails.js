@@ -1,9 +1,9 @@
 import React, { Component, createRef, forwardRef } from 'react';
-import { Text, FAB, TextInput, Button, ActivityIndicator, Searchbar } from 'react-native-paper';
+import { Text, FAB, TextInput, Button, ActivityIndicator, Searchbar, Modal} from 'react-native-paper';
 import { Platform, StatusBar, StyleSheet, View, TouchableOpacity, Image, ImageBackground, Dimensions, FlatList } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 
-import _ from 'lodash'
+import _, { min } from 'lodash'
 const chroma = require('chroma-js')
 
 import Swiper from 'react-native-swiper'
@@ -51,23 +51,49 @@ export default class VoteDetails extends Component {
         isActive = props.route.params.waifu.leaveDate.toDate() > new Date()
         break;
       case "daily":
-        isActive = props.route.params.poll.activeTill > new Date()
+        isActive = props.route.params.poll.isActive
         break;
     }
 
+    var userInfo = store.getState().user.credentials;
+    var topVote = {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
+    var votes = _.orderBy(props.route.params.waifu.votes, ['vote'] ,['desc']);
+
+		if(props.route.params.poll.type == "daily" && isActive){
+			votes = votes.filter(x => x.husbandoId == userInfo.userId);
+			if(votes.length > 0){
+				topVote = votes[0]
+      }
+		}
+		else{
+			if(votes.length > 0){
+				var maxVote = votes[0].vote;
+				if(votes.filter(x => x.vote == maxVote).length > 1){
+					//Theres A Tie
+					topVote.vote = "TIE";
+				}
+				else{
+					topVote = votes[0]
+				}
+			}
+    }
+    
     this.state = {
       isActive,
       navigation: props.navigation,
       poll: props.route.params.poll,
       pollType: props.route.params.poll.type,
       waifu: props.route.params.waifu,
-      userInfo: store.getState().user.credentials,
+      userInfo,
       otherUsers: store.getState().user.otherUsers,
-      topVote: {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"},
-      voteCount: 0
+      topVote,
+      voteCount: 0,
+      closeVoteModal: false,
+      nextRankMinBid: 0
     };
     
     this.submitVote = this.submitVote.bind(this)
+    this.closeVoteModal = this.closeVoteModal.bind(this)
     this.setSubscribes = this.setSubscribes.bind(this)
     this.unSetSubscribes = this.unSetSubscribes.bind(this)
   }
@@ -108,7 +134,7 @@ export default class VoteDetails extends Component {
           isActive = newWaifu.leaveDate.toDate() > new Date()
           break;
         case "daily":
-          isActive = newPoll.activeTill > new Date()
+          isActive = newPoll.isActive
           break;
       }
       this.setState({isActive, waifu: newWaifu, poll: newPoll, topVote})
@@ -150,7 +176,7 @@ export default class VoteDetails extends Component {
         isActive = updtWaifu.leaveDate.toDate() > new Date()
         break;
       case "daily":
-        isActive = updtPoll.activeTill > new Date()
+        isActive = updtPoll.isActive
         break;
     }
 
@@ -158,6 +184,7 @@ export default class VoteDetails extends Component {
       userInfo: updtUserInfo,
       poll: updtPoll,
       waifu: updtWaifu,
+      isActive,
       topVote
     })
   }
@@ -206,10 +233,11 @@ export default class VoteDetails extends Component {
 
   submitVote(vote, waifu){
     submitVote(vote, waifu)
-    this.setState({voteCount: 0})
+    this.setState({voteCount: 0, showConf: false})
   }
 
-  _onMomentumScrollEnd = (e, state, context) => {
+  closeVoteModal(){
+    this.setState({ showConf: false })
   }
 
   waifuLinkPress = async () => {
@@ -218,24 +246,56 @@ export default class VoteDetails extends Component {
   
   render(){
     var currVote = 0;
-    var validVote = true;
     var minPoints = 1;
-    if(this.state.waifu.husbandoId == "Weekly" && 
-      !_.isEmpty(this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)) &&
-      this.state.topVote.vote != "None")
-    {
-      var voteObj = this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)[0]
-      currVote = voteObj.vote;
+    var validVote = true;
 
-      if(voteObj.vote < this.state.topVote.vote){
-        minPoints = this.state.topVote.vote - voteObj.vote + 1
-      }
+    var rank = 1;
+    var rankColor = "#ff0000";
+    var totalVoteCount = 0;
+    var nextRankMinBid = 0;
+
+    switch(this.state.waifu.husbandoId){
+      case "Weekly":
+        minPoints = this.state.topVote.vote != "None" ? this.state.topVote.vote : 1
+        var voteObj = this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)
+        if(!_.isEmpty(voteObj)){
+          currVote = voteObj[0].vote;
+        }
+  
+        if(currVote < minPoints){
+          minPoints = minPoints - currVote + 1
+        }
+        else{
+          minPoints = 1;
+        }
+
+        totalVoteCount = this.state.waifu.votes.map(x => x.vote).reduce(function(a, b){ return a + b; }, 0)
+        if (totalVoteCount < 50){
+          rank = 1
+          rankColor = "#835220"
+          nextRankMinBid = 50 - totalVoteCount;
+        }
+        else if(totalVoteCount < 100){
+          rank = 2
+          rankColor = "#7b7979"
+          nextRankMinBid = 100 - totalVoteCount;
+        }
+        else if(totalVoteCount < 200){
+          rank = 3
+          rankColor = "#b29600"
+          nextRankMinBid = 200 - totalVoteCount;
+        }
+        else{
+          rank = 4
+        }
+        break;
+      case "Daily":
+        minPoints = 1
+        break;
     }
-    
-    if(this.state.waifu.husbandoId == "Weekly")
-      validVote = (currVote + this.state.voteCount) <= this.state.topVote.vote || this.state.voteCount > this.state.userInfo.points
-    else
-      validVote = this.state.voteCount > minPoints
+
+    var userVote = this.state.voteCount <= minPoints ? minPoints : this.state.voteCount;
+    validVote = (currVote + userVote) >= minPoints &&  userVote <= this.state.userInfo.points;
 
     return (
       <View style={[styles.container]}>
@@ -276,43 +336,69 @@ export default class VoteDetails extends Component {
                     }
                     keyExtractor={item => item.husbandoId}
                   />
-                  
+
                   {
                     this.state.isActive && this.state.userInfo.points > 0 ?
-                      <View style={{height: 50, flexDirection: "row" , alignItems:"center", justifyContent:"center"}}>
-                        <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
-                          <NumericInput value={this.state.voteCount} 
-                            onChange={value => this.setState({voteCount: value})}
-                            rounded
-                            minValue={minPoints} 
-                            maxValue={this.state.userInfo.points}
-                            totalHeight={35}
-                            leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                            rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
-                            separatorWidth={0}
-                            inputStyle={{ 
-                              fontFamily:"Edo",
-                              fontSize: 25,
-                            }}
-                            containerStyle={{ 
-                              flex:.6,
-                              width: width/2.25,
-                              backgroundColor: chroma('white').alpha(.5).hex(),
-                              borderWidth: 1,
-                              borderColor: chroma('black').alpha(.25).hex(),
-                             }}
-                          />
-                        </View>
-                        <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
-                          <Button
-                            disabled={validVote}
-                            mode="contained"
-                            color={chroma('aqua').hex()}
-                            style={{ fontFamily:"Edo", flex: .75, width: width/2.5 }}
-                            onPress={() => this.submitVote(this.state.voteCount, this.state.waifu)}
-                          >
-                            Submit Vote
-                          </Button>
+                      <View style={{height: 'auto', alignItems:"center", justifyContent:"center"}}>
+                        {
+                          this.state.waifu.husbandoId == "Weekly" && rank < 4  && nextRankMinBid <= this.state.userInfo.points &&
+                           (nextRankMinBid + currVote) >= minPoints ?
+                            <View style={{height: 50, flexDirection: "row" , alignItems:"center", justifyContent:"center"}}>
+                              <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
+                                <Button
+                                  mode="contained"
+                                  color={chroma(rankColor).hex()}
+                                  style={{ fontFamily:"Edo", flex: .75, width: width/1.5 }}
+                                  onPress={() => this.setState({ showConf: true, nextRankMinBid: nextRankMinBid})}
+                                >
+                                  Next Rank - {nextRankMinBid} Points
+                                </Button>
+                              </View>
+                            </View>
+                          : <></>
+                        }
+
+                        <View style={{height: 50, marginTop: 10, flexDirection: "row" , alignItems:"center", justifyContent:"center"}}>
+                          <View style={{width:'auto', alignItems:"center", justifyContent:"center"}}>
+                            <NumericInput
+                              value={userVote}
+                              onChange={value => {
+                                if(value < minPoints)
+                                  value = minPoints
+
+                                this.setState({voteCount: value})
+                              }}
+                              rounded
+                              minValue={minPoints} 
+                              maxValue={this.state.userInfo.points}
+                              totalHeight={35}
+                              leftButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                              rightButtonBackgroundColor={chroma('aqua').alpha(.85).hex()}
+                              separatorWidth={0}
+                              inputStyle={{ 
+                                fontFamily:"Edo",
+                                fontSize: 25,
+                              }}
+                              containerStyle={{ 
+                                flex:.6,
+                                width: width/2.25,
+                                backgroundColor: chroma('white').alpha(.5).hex(),
+                                borderWidth: 1,
+                                borderColor: chroma('black').alpha(.25).hex(),
+                              }}
+                            />
+                          </View>
+                          <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
+                            <Button
+                              disabled={!validVote}
+                              mode="contained"
+                              color={chroma('aqua').hex()}
+                              style={{ fontFamily:"Edo", flex: .75, width: width/2 }}
+                              onPress={() => this.submitVote(userVote, this.state.waifu)}
+                            >
+                              {(this.state.voteCount <= minPoints ? minPoints : this.state.voteCount) == minPoints ? "Submit Min Vote" : "Submit Vote"}
+                            </Button>
+                          </View>
                         </View>
                       </View>
                     :<></>
@@ -327,6 +413,47 @@ export default class VoteDetails extends Component {
             </Swiper>
           </View>
         </ImageBackground>
+
+        {/* Update User Info Modal */}
+        <Modal
+          animationType="slide"
+          visible={ this.state.showConf }
+          onDismiss={this.closeVoteModal}
+          onRequestClose={this.closeVoteModal}
+        >
+          <View style={{height: height, alignItems:"center", justifyContent: "center", width: width, backgroundColor: chroma('white')}}>
+            <View style={{flex:1, alignItems:"center", justifyContent: "center", width:width, marginTop: 22}}>
+              <Text style={[{fontFamily: "Edo",fontSize: 30,alignSelf: "center", textAlign:"center", width: width * .9}]}>
+                Spend {this.state.nextRankMinBid} Points To Rank Up?
+              </Text>
+              
+              <View style={{height: 'auto', flexDirection:"row", alignItems:"center", justifyContent: "center"}}>
+                <View style={{flex: 1, alignItems:"center", justifyContent: "center"}}>
+                  <Button
+                    mode={"contained"} color={chroma('aqua').hex()}
+                    labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                    style={{width: '90%'}}
+                    onPress={() => this.setState({showConf: false})}
+                  >
+                    No
+                  </Button>
+                </View>
+
+                <View style={{flex: 1, alignItems:"center", justifyContent: "center"}}>
+                  <Button
+                    disabled={!validVote}
+                    mode={"contained"} color={chroma('aqua').hex()}
+                    labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                    style={{width: '90%'}}
+                    onPress={() => this.submitVote(this.state.nextRankMinBid, this.state.waifu)}
+                  >
+                    Yes
+                  </Button>
+                </View>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }

@@ -374,7 +374,7 @@ export async function fightBoss(bossFightObj){
 
   var rolls = [];
   for(var i = 0; i < waifu.rank; i++){
-    rolls.push(randomNumber(1, waifu.attack))
+    rolls.push(_.random(1, waifu.attack))
   }
 
   var totalDmg = rolls.reduce((a, b) => a + b, 0);
@@ -383,7 +383,7 @@ export async function fightBoss(bossFightObj){
   var fightResult = 0;
 
   //calculates final result
-  if(totalDmg > boss.hp){
+  if(totalDmg >= boss.hp){
     fightResult = 1;
     rewardResult = await buildBossRewardStr(boss.reward);
     userFightRec.waifusUsed.push(bossFightObj.waifuId)
@@ -789,11 +789,7 @@ function getRandWaifu(characters){
   return shuffle(charSet)[Math.floor(Math.random() * charSet.length)]
 }
 
-function randomNumber(min, max) {  
-  return Math.ceil(Math.random() * max); 
-}
-
-function getBaseStats(rank){
+export function getBaseStats(rank){
 	var stats = { rank, attack: 1, defense: 1}
 	switch (rank){
 		case 1:

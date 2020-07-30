@@ -75,7 +75,7 @@ function CharThumbNail(props){
           <TouchableOpacity
             activeOpacity={.25}
             onPress={() => selectCharacter(char)}
-            delayLongPress={100}
+            delayLongPress={500}
             onLongPress={() => setOpenMenu(true)}
             style={[styles.itemContainer]}
           >
@@ -115,12 +115,12 @@ function CharThumbNail(props){
       >
         <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={() => toggleWishListWaifu(char.link)} title={isFav ? "Remove From WishList" : "Add To WishList"} />
 
-        {
+        {/* {
           userInfo.submitSlots > 0  && !isSubmitted ?
             <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={() => submitWaifu(char)}
               title={"Submit"} />
           :<></>
-        }
+        } */}
       </Menu>
     </View>
   )

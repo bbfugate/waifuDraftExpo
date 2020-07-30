@@ -45,14 +45,14 @@ export default class NewTrade extends Component {
       size: {width,height},
       tradeFrom: {
         points: 0,
-        submitSlots: 0,
+        // submitSlots: 0,
         rankCoins: 0,
         statCoins: 0,
         waifus: []
       },
       tradeTo: {
         points: 0,
-        submitSlots: 0,
+        // submitSlots: 0,
         rankCoins: 0,
         statCoins: 0,
         waifus: []
@@ -147,10 +147,12 @@ export default class NewTrade extends Component {
         break;
     }
 
-    if(from.points != 0 || from.submitSlots != 0 || from.waifus.length != 0)
+    // if(from.points != 0 || from.submitSlots != 0 || from.waifus.length != 0)
+    if(from.points != 0 || from.waifus.length != 0)
       fromTradeIsValid = true
 
-    if(to.points != 0 || to.submitSlots != 0 || to.waifus.length != 0)
+    // if(to.points != 0 || to.submitSlots != 0 || to.waifus.length != 0)
+    if(to.points != 0  || to.waifus.length != 0)
       toTradeIsValid = true
 
     this.setState({tradeFrom: from, tradeTo: to, fromTradeIsValid, toTradeIsValid})
@@ -172,14 +174,14 @@ export default class NewTrade extends Component {
     this.setState({
       tradeFrom: {
         points: 0,
-        submitSlots: 0,
+        // submitSlots: 0,
         rankCoins: 0,
         statCoins: 0,
         waifus: []
       },
       tradeTo: {
         points: 0,
-        submitSlots: 0,
+        // submitSlots: 0,
         rankCoins: 0,
         statCoins: 0,
         waifus: []
@@ -229,7 +231,8 @@ export default class NewTrade extends Component {
                         from.points = count;
                         
                         var fromTradeIsValid = false;
-                        if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                        // if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                        if(from.points > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
                           fromTradeIsValid = true
 
                         this.setState({tradeFrom: from, fromTradeIsValid})
@@ -255,7 +258,7 @@ export default class NewTrade extends Component {
                   </View>
                   
                   {/* Submit Slots */}
-                  <View style={styles.pointsRow}>
+                  {/* <View style={styles.pointsRow}>
                     <View style={{flex: .6}}>
                       <Text style={[styles.text, {color: "white"}]}>Submit Slots</Text>
                     </View>
@@ -290,19 +293,20 @@ export default class NewTrade extends Component {
                       }}
                     />
                   </View>
-                  
+                   */}
                   {/* Rank Coins */}
                   <View style={styles.pointsRow}>
                     <View style={{flex: .6}}>
                       <Text style={[styles.text, {color: "white"}]}>Rank Coins</Text>
                     </View>
-                    <NumericInput value={this.state.tradeFrom.submitSlots}
+                    <NumericInput value={this.state.tradeFrom.rankCoins}
                       onChange={count => {
                         var from = this.state.tradeFrom;
                         from.rankCoins = count;
                         
                         var fromTradeIsValid = false;
-                        if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                        // if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                        if(from.points > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
                           fromTradeIsValid = true
 
                         this.setState({tradeFrom: from, fromTradeIsValid})
@@ -333,13 +337,14 @@ export default class NewTrade extends Component {
                     <View style={{flex: .6}}>
                       <Text style={[styles.text, {color: "white"}]}>Stat Coins</Text>
                     </View>
-                    <NumericInput value={this.state.tradeFrom.submitSlots}
+                    <NumericInput value={this.state.tradeFrom.statCoins}
                       onChange={count => {
                         var from = this.state.tradeFrom;
                         from.statCoins = count;
                         
                         var fromTradeIsValid = false;
-                        if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                        // if(from.points > 0 || from.submitSlots > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
+                        if(from.points > 0 || from.rankCoins > 0 || from.statCoins > 0 || from.waifus.length > 0)
                           fromTradeIsValid = true
 
                         this.setState({tradeFrom: from, fromTradeIsValid})
@@ -449,7 +454,8 @@ export default class NewTrade extends Component {
                         to.points = count;
                         
                         var toTradeIsValid = false;
-                        if(to.points > 0 || to.submitSlots > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
+                        // if(to.points > 0 || to.submitSlots > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
+                        if(to.points > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
                           toTradeIsValid = true
 
                         this.setState({tradeTo: to, toTradeIsValid})
@@ -475,7 +481,7 @@ export default class NewTrade extends Component {
                   </View>
                   
                   {/* Submit Slots */}
-                  <View style={{flexDirection: "row"}}>
+                  {/* <View style={{flexDirection: "row"}}>
                     <View style={{flex: .6}}>
                       <Text style={[styles.text, {color: "white"}]}>Submit Slots</Text>
                     </View>
@@ -510,19 +516,20 @@ export default class NewTrade extends Component {
                       }}
                     />
                   </View>
-                
+                 */}
                   {/* Rank Coins */}
                   <View style={styles.pointsRow}>
                     <View style={{flex: .6}}>
                       <Text style={[styles.text, {color: "white"}]}>Rank Coins</Text>
                     </View>
-                    <NumericInput value={this.state.tradeTo.submitSlots}
+                    <NumericInput value={this.state.tradeTo.rankCoins}
                       onChange={count => {
                         var to = this.state.tradeTo;
                         to.rankCoins = count;
                         
                         var toTradeIsValid = false;
-                        if(to.points > 0 || to.submitSlots > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
+                        // if(to.points > 0 || to.submitSlots > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
+                        if(to.points > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
                           toTradeIsValid = true
 
                         this.setState({tradeTo: to, toTradeIsValid})
@@ -553,13 +560,14 @@ export default class NewTrade extends Component {
                     <View style={{flex: .6}}>
                       <Text style={[styles.text, {color: "white"}]}>Stat Coins</Text>
                     </View>
-                    <NumericInput value={this.state.tradeTo.submitSlots}
+                    <NumericInput value={this.state.tradeTo.statCoins}
                       onChange={count => {
                         var to = this.state.tradeTo;
                         to.statCoins = count;
                         
                         var toTradeIsValid = false;
-                        if(to.points > 0 || to.submitSlots > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
+                        // if(to.points > 0 || to.submitSlots > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
+                        if(to.points > 0 || to.rankCoins > 0 || to.statCoins > 0 || to.waifus.length > 0)
                           toTradeIsValid = true
 
                         this.setState({tradeTo: to, toTradeIsValid})
@@ -687,8 +695,7 @@ export default class NewTrade extends Component {
                       
                       {/* Points Section */}
                       {
-                        this.state.tradeFrom.points > 0 || this.state.tradeFrom.submitSlots > 0 ||
-                         this.state.tradeFrom.rankCoins > 0 || this.state.tradeFrom.statCoins > 0 ?
+                        this.state.tradeFrom.points > 0 || this.state.tradeFrom.rankCoins > 0 || this.state.tradeFrom.statCoins > 0 ?
                           <View style={styles.pointsView}>
                             {this.state.tradeFrom.points > 0 ?
                               <View style={styles.pointsReviewRow}>
@@ -696,12 +703,12 @@ export default class NewTrade extends Component {
                                 <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeFrom.points}</Text>
                               </View>
                             :<></>}
-                            {this.state.tradeFrom.submitSlots > 0 ?
+                            {/* {this.state.tradeFrom.submitSlots > 0 ?
                               <View style={styles.pointsReviewRow}>
                                 <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={submitSlotsIcon} />
                                 <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeFrom.submitSlots}</Text>
                               </View>
-                            :<></>}
+                            :<></>} */}
                             {this.state.tradeFrom.rankCoins > 0 ?
                               <View style={styles.pointsReviewRow}>
                                 <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />
@@ -788,8 +795,7 @@ export default class NewTrade extends Component {
                       
                       {/* Points Section */}
                       {
-                        this.state.tradeTo.points > 0 || this.state.tradeTo.submitSlots > 0 ||
-                         this.state.tradeTo.rankCoins > 0 || this.state.tradeTo.statCoins > 0 ?
+                        this.state.tradeTo.points > 0 || this.state.tradeTo.rankCoins > 0 || this.state.tradeTo.statCoins > 0 ?
                           <View style={styles.pointsView}>
                             {this.state.tradeTo.points > 0 ?
                               <View style={styles.pointsReviewRow}>
@@ -797,12 +803,12 @@ export default class NewTrade extends Component {
                                 <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeTo.points}</Text>
                               </View>
                             :<></>}
-                            {this.state.tradeTo.submitSlots > 0 ?
+                            {/* {this.state.tradeTo.submitSlots > 0 ?
                               <View style={styles.pointsReviewRow}>
                                 <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={submitSlotsIcon} />
                                 <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.tradeTo.submitSlots}</Text>
                               </View>
-                            :<></>}
+                            :<></>} */}
                             {this.state.tradeTo.rankCoins > 0 ?
                               <View style={styles.pointsReviewRow}>
                                 <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />

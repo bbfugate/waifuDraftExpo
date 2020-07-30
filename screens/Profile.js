@@ -365,166 +365,32 @@ export default class Profile extends Component {
     }
     return _.shuffle(charSet)[Math.floor(Math.random() * charSet.length)];
   }
+  
+  recreateWeeklyPoll(){
+    console.log("remake")
+    // firebase.firestore().collection('waifus').where("husbandoId", "==", "Weekly").get()
+    // .then(async (docs) => {
+    //   docs.forEach(async x => {
+    //     var waifu = {waifuId: x.id, ...x.data(), votes: []}
 
-  addWishList(){
-    firebase.firestore().collection("waifuPoll").where("husbandoId", "==", "Weekly").get()
-    .then(async (data) => {
-      data.forEach(rec => {
-        rec.ref.delete()
-          .catch((err) => {
-            return firebase.firestore().collection('pollLogs').add({
-              log: err.message,
-              timestamp: firebase.firestore.Timestamp.now()
-            });
-          });
-      });
-    })
-    .then(async () => {
-      var newPollWaifus = [];
-      const users = (await firebase.firestore().collection('users').get()).docs.map(x => x.data());
-      console.log(users)
-      
-      const waifuLinks = (await firebase.firestore().collection('waifus').get()).docs.map(x => x.data().link);
-      var compressSearchJson = require('../assets/SearchFile.json');
-      var waifuDataList = JSON.parse(ls.decompress(compressSearchJson));
-      
-      const characters = waifuDataList.characters;
-      characters['Anime-Manga'].items = characters['Anime-Manga'].items.filter(x => !waifuLinks.includes(x.link));
-      characters['Marvel'].items = characters['Marvel'].items.filter(x => !waifuLinks.includes(x.link));
-      characters['DC'].items = characters['DC'].items.filter(x => !waifuLinks.includes(x.link));
+    //     await firebase.firestore().collection("waifuPoll").add(Object.assign({}, waifu))
+    //   });
+    // })
+    
+    // firebase.firestore().collection('waifus-bk').get()
+    // .then(async (docs) => {
+    //   docs.forEach(async x => {
+    //     var waifuData = x.data();
+    //     if(waifuData.husbandoId != "Weekly"){
+    //       var waifu = waifuData;
+    //       var id = _.cloneDeep(waifu).waifuId;
 
-      var amChars = characters['Anime-Manga'].items;
-      amChars.map(x => x.type ="Anime-Manga")
-
-      var comicChars = characters['Marvel'].items.concat(characters['DC'].items);
-      comicChars.map(x => x.type = x.publisher)
-
-      var chars = amChars.concat(comicChars);
-      var topChars = [];
-      var topAM = _.take(_.sortBy(_.cloneDeep(chars.filter(x => x.type == "Anime-Manga")), ['popRank']), 500);
-      var topComic = _.take(_.sortBy(_.cloneDeep(chars.filter(x => x.type != "Anime-Manga"))), 500)
-      topChars = topAM.concat(topComic)
-
-      var flatWishList = users.flatMap(x => x.wishList).filter(x => !waifuLinks.includes(x));
-      wishListChars = _.cloneDeep(chars).filter(x => flatWishList.includes(x.link));
-
-      var appearDate = new Date();
-      appearDate.setHours(14,0,0)
-
-      while(newPollWaifus.length < 5){
-        var newWaifu = {}
-        var randWaifuList = [];
-        var validWaifuList = _.cloneDeep(wishListChars).filter(x => !newPollWaifus.map(y => y.link).includes(x.link));
-
-        //loop through each user and pick a character from their wishlist
-        users.forEach(user => {
-          if(!_.isEmpty(user.wishList)){
-            randWaifuList.push(user.wishList[_.random(user.wishList.length - 1)])
-          }
-        })
-
-        if(_.isEmpty(randWaifuList)){
-          newWaifu = topChars[_.random(topChars.length - 1)]
-        }
-        else{
-          var newWaifuLink = randWaifuList[_.random(randWaifuList.length-1)];
-          if (newPollWaifus.map(x => x.link).includes(newWaifuLink))
-            continue;
-            
-          newWaifu = validWaifuList.filter(x => x.link == newWaifuLink)[0];
-        }
-
-        var leaveDate = _.cloneDeep(appearDate);
-        leaveDate.setDate(leaveDate.getDate() + 2);
-        leaveDate.setHours(24,0,0)
-
-        newWaifu.appearDate = firebase.firestore.Timestamp.fromDate(appearDate)
-        newWaifu.leaveDate = firebase.firestore.Timestamp.fromDate(leaveDate)
-        
-        newWaifu.type = newWaifu.publisher || "Anime-Manga";
-        newPollWaifus.push(newWaifu);
-
-        appearDate.setDate(appearDate.getDate() + 1);
-      }
-
-      return newPollWaifus;
-    })
-    .then(async (waifus) => {
-      var pollWaifus = [];
-      waifus.forEach(async (x) => {
-        x.rank = 1;
-        x.attack = 3;
-        x.defense = 1;
-        x.husbandoId = "Weekly";
-        x.isActive = true;
-        x.submittedBy = "System";
-
-        await firebase.firestore().collection("waifus").add(Object.assign({}, x))
-          .then((data) => {
-            x.waifuId = data.id;
-            pollWaifus.push(x);
-          });
-      });
-      await firebase.firestore().collection("pollLogs").add({
-        log: "added waifus to poll array",
-        timestamp: firebase.firestore.Timestamp.fromDate(new Date())
-      })
-      .catch((err) => {
-        return firebase.firestore().collection('pollLogs').add({
-          log: err.message,
-          timestamp: firebase.firestore.Timestamp.fromDate(new Date())
-        });
-      });
-      return pollWaifus;
-    })
-    .then(async (waifus) => {
-      waifus.forEach(async (x) => {
-        x.votes = [];
-        await firebase.firestore().collection("waifuPoll").add(Object.assign({}, x))
-      });
-    })
-    .then(() => {
-      return firebase.firestore().collection("tasks").where("worker", "==", "closeWeeklyPoll").limit(1).get();
-    })
-    .then((data) => {
-      if (data.empty)
-        return null;
-      else {
-        var closeDate = new Date();
-        closeDate.setDate(closeDate.getDate() + 2);
-        closeDate.setHours(24,0,0)
-
-        return data.docs[0].ref.update({
-          performAt: firebase.firestore.Timestamp.fromDate(closeDate),
-          status: "scheduled"
-        });
-      }
-    })
-    .then(() => {
-      return firebase.firestore().collection("tasks").where("worker", "==", "closeWeeklyPollReminder").limit(1).get()
-    })
-    .then((data) => {
-      if(data.empty)
-        return null
-      else{
-        var closeRemindDate = setDay(firebase.firestore.Timestamp.now().toDate(), 7);
-        closeRemindDate.setHours(23,30,0)
-
-        return data.docs[0].ref.update({ performAt: firebase.firestore.Timestamp.fromDate(closeRemindDate), status: "scheduled" })
-      }
-    })
-    .then(() => {
-      return firebase.firestore().collection("pollLogs").add({
-        log: "Poll Has Been Opened",
-        timestamp: firebase.firestore.Timestamp.fromDate(new Date())
-      });
-    })
-    .catch((err) => {
-      return firebase.firestore().collection('pollLogs').add({
-        log: err.message,
-        timestamp: firebase.firestore.Timestamp.fromDate(new Date())
-      });
-    })
+    //       delete waifu.waifuId
+  
+    //       await firebase.firestore().doc(`waifus/${id}`).set(waifu)
+    //     }
+      // });
+    // })
   }
 
   createWaifuBackUp(){
@@ -584,6 +450,7 @@ export default class Profile extends Component {
   render(){
     var waifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.waifus.includes(x.waifuId));
     var waifuGroups = _.chain(waifus)
+    .orderBy((o) => (o.attack + o.defense), ['desc'])
     .groupBy(waifu => Number(waifu.rank))
     .map((waifus, rank) => ({ rank: Number(rank), waifus }))
     .orderBy(group => Number(group.rank), ['desc'])
@@ -625,7 +492,7 @@ export default class Profile extends Component {
                   <Text style={[styles.text]}>Points - {this.state.userInfo.points}</Text>
                   <Text style={[styles.text]}>Rank Coins - {this.state.userInfo.rankCoins}</Text>
                   <Text style={[styles.text]}>Stat Coins - {this.state.userInfo.statCoins}</Text>
-                  <Text style={[styles.text]}>Submit Slots - {this.state.userInfo.submitSlots}</Text>
+                  {/* <Text style={[styles.text]}>Submit Slots - {this.state.userInfo.submitSlots}</Text> */}
                 </View>
               </View>
 
@@ -659,7 +526,7 @@ export default class Profile extends Component {
                     <View style={{height: 50, width: width}}>
                       <Button
                         mode={"contained"} color={chroma('aqua').hex()} labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                        onPress={this.addWishList}
+                        onPress={this.addNewDaily}
                       >
                         Add New Daily
                       </Button>

@@ -142,7 +142,7 @@ export default class SubmitCharacter extends Component {
                     :<></>
                   }
 
-                  {
+                  {/* {
                     canSubmit ?
                       <View style={styles.buttonRowView}>
                         <View style={styles.buttonItem}>
@@ -155,7 +155,7 @@ export default class SubmitCharacter extends Component {
                         </View>
                       </View>
                     : <></>
-                  }
+                  } */}
                 </View>
               
                 {/* Details */}

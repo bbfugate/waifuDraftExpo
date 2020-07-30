@@ -95,8 +95,8 @@ export default class Trade extends Component {
                     <View style={{ padding: 2, backgroundColor: chroma('black').alpha(.75), alignItems:"center", justifyContent:"center"}}>
                       <Text style={{color: "white", fontFamily: "Edo", fontSize:30, textAlign: "center"}}>{item.userName}</Text>
                       
-                      <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>POINTS - {item.points}</Text>
-                      <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>SUBMIT SLOTS - {item.submitSlots}</Text>
+                      {/* <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>POINTS - {item.points}</Text> */}
+                      {/* <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>SUBMIT SLOTS - {item.submitSlots}</Text> */}
                       <Text style={{color: "white", fontFamily: "Edo", fontSize:22, textAlign: "center"}}>WAIFUS - {item.waifus.length}</Text>
                     </View>
                   </TouchableOpacity>

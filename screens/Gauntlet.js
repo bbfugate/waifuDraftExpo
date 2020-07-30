@@ -15,6 +15,10 @@ import rankCoinIcon from '../assets/images/rankCoinIcon.png'
 import statCoinIcon from '../assets/images/statCoinIcon.png'
 import bossDefeatedIcon from '../assets/images/bossDefeated.png'
 
+import MarvelLogo from '../assets/images/MarvelLogo.png'
+import DCLogo from '../assets/images/DCLogo.png'
+import AnimeLogo from '../assets/images/AnimeLogo.png'
+
 import shitTierBossIndi from '../assets/images/ShitTierBossIndi.gif'
 import bronzeTierBossIndi from '../assets/images/BronzeTierBossIndi.gif'
 import silverTierBossIndi from '../assets/images/SilverTierBossIndi.gif'
@@ -26,6 +30,7 @@ import watch from 'redux-watch'
 
 //Component
 import RankBackground from '../components/RankBackGround'
+import Countdown from '../components/CountDown'
 
 const chroma = require('chroma-js')
 const { width, height } = Dimensions.get('window');
@@ -126,18 +131,71 @@ export default class Gauntlet extends Component {
               var bgColor = "#ff0000";
               switch(boss.tier){
                 case 2:
-                  indi = bronzeTierBossIndi
                   bgColor = "#835220"
                   break;
                 case 3:
-                  indi = silverTierBossIndi
                   bgColor = "#7b7979"
                   break;
                 case 4:
-                  indi = goldTierBossIndi
                   bgColor = "#b29600"
                   break;
               }
+
+              var minRank = shitTierBossIndi;
+              var maxRank = goldTierBossIndi;
+              var hasMinRankReq = false;
+              var hasMaxRankReq = false;
+              var hasAMReq = false;
+              var hasDcReq = false;
+              var hasMarvelReq = false;
+
+              boss.requirements.forEach(req => {
+                var key = Object.keys(req)[0];
+                if(key == "rank"){
+                  Object.keys(req[key]).forEach(x => {
+                    if(x == "min"){
+                      switch(req[key][x]){
+                        case 2:
+                          hasMinRankReq = true;
+                          minRank = bronzeTierBossIndi
+                          break;
+                        case 3:
+                          hasMinRankReq = true;
+                          minRank = silverTierBossIndi
+                          break;
+                        case 4:
+                          hasMinRankReq = true;
+                          minRank = goldTierBossIndi
+                          break;
+                      }
+                    }
+                    else if(x == "max"){
+                      switch(req[key][x]){
+                        case 2:
+                          hasMaxRankReq = true;
+                          maxRank = bronzeTierBossIndi
+                          break;
+                        case 3:
+                          hasMaxRankReq = true;
+                          maxRank = silverTierBossIndi
+                          break;
+                        case 4:
+                          hasMaxRankReq = true;
+                          maxRank = goldTierBossIndi
+                          break;
+                      }
+                    }
+                  });
+                }
+                else{
+                  if(req[key].includes("Anime-Manga"))
+                    hasAMReq = true
+                  if(req[key].includes("Marvel"))
+                    hasMarvelReq = true
+                  if(req[key].includes("DC"))
+                    hasDcReq = true
+                }
+              })
 
               return (
                 <View key={boss.name} onLayout={this._onLayoutDidChange}
@@ -164,12 +222,52 @@ export default class Gauntlet extends Component {
                         }}
                       >
                         <View style={{height: '100%', width: '100%'}}>
-                          <Image style={{position: 'absolute', top: 5, right: 5, height: 50, width: 50, resizeMode: "contain"}} source={indi}/>
+                      
+                          <Countdown activeTill={boss.leaveTime.toDate()} type={"BOSS"} />
+                          {/* <Image style={{position: 'absolute', top: '22%', right: 15, zIndex:2, height: 50, width: 50, resizeMode: "contain"}} source={indi}/> */}
+
+                          <View style={{position: 'absolute', width: 'auto', top: '22%', right: 15, zIndex:2, flexDirection: "row"}}>
+                            {/* {
+                              hasMinRankReq ?
+                              <View>
+                                <Image style={{height: 50, width: 75, resizeMode: "contain"}} source={minRank}/>
+                              </View>
+                              :<></>
+                            } */}
+                            
+                            <View>
+                              <Image style={{height: 50, width: 50, resizeMode: "contain"}} source={maxRank}/>
+                            </View>
+                          </View>
+
+                          <View style={{position: 'absolute', top: '22%', width: 'auto', left: 15, zIndex:2, flexDirection: "row"}}>
+                            {
+                              hasAMReq ?
+                              <View>
+                                <Image style={{height: 50, width: 75, resizeMode: "contain"}} source={AnimeLogo}/>
+                              </View>
+                              :<></>
+                            }
+                            {
+                              hasMarvelReq ?
+                                <View>
+                                  <Image style={{height: 50, width: 50, resizeMode: "contain"}} source={MarvelLogo}/>
+                                </View>
+                              :<></>
+                            }
+                            {
+                              hasDcReq ?
+                              <View>
+                                <Image style={{height: 50, width: 50, resizeMode: "contain"}} source={DCLogo}/>
+                              </View>
+                              :<></>
+                            }
+                          </View>
 
                           <Image style={{...StyleSheet.absoluteFillObject, top: '25%', left: '10%', height: '60%', width: '80%', resizeMode: "contain"}} source={{uri: boss.img}}/>
                         </View>
                       </LinearGradient>
-                      
+
                       <View style={{flex:1, width: width * .85, position:"absolute", bottom: 150 }}>
                         <Text style={[styles.text, {fontSize: 75, textAlign:"center"}]}>HP: {boss.hp}</Text>
 

@@ -11,7 +11,7 @@ const chroma = require('chroma-js')
 import Swiper from 'react-native-swiper'
 import AMCharDetails from '../components/AMCharDetails'
 import ComicCharDetails from '../components/ComicCharDetails'
-import {useRankCoin, useStatCoin, updateWaifuImg} from '../redux/actions/dataActions'
+import {useRankCoin, useStatCoin, updateWaifuImg, getBaseStats} from '../redux/actions/dataActions'
 
 import store from '../redux/store'
 import watch from 'redux-watch'
@@ -122,6 +122,12 @@ export default class CharDetails extends Component {
     if(waifu.type != 'Anime-Manga')
       displayName = `${waifu.name} ${waifu.currentAlias != "" && waifu.currentAlias != waifu.name && !waifu.name.includes(waifu.currentAlias) ? "- " + waifu.currentAlias : ""}`
 
+    var canPointRank = false;
+    if(waifu.rank < 4){
+      var baseStats = getBaseStats(waifu.rank + 1)
+      canPointRank = waifu.attack >= baseStats.attack && waifu.defense >= baseStats.defense;
+    }
+
     return (
       <View style={[styles.container]}>
         <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: waifu.img}}>
@@ -199,37 +205,46 @@ export default class CharDetails extends Component {
         {/* Rank Modal */}
         <Modal
           animationType="slide"
-          transparent={true}
           visible={this.state.showRankCoinConf}
           onRequestClose={() => this.setState({showRankCoinConf: false})}
         >
           <View style={{flex:1, width:width, marginTop: 22, justifyContent:"center", alignItems:"center"}}>
-            <View style={{height: 150, width: width, backgroundColor: chroma("white"),
-              borderRadius: 25}}>
-              
-              <View style={{flex:1}}>
-                <Text style={styles.text}>You Are About To Use A Rank Coin. Proceed?</Text>
-              </View>
+            <View style={{height: 150, width: width, backgroundColor: chroma("white")}}>
+              {/* { 
+                canPointRank ? 
+                   <>
+                     <View style={{flex:1}}>
+                       <Text style={styles.text}>You Are About To Use A Rank Coin. Proceed?</Text>
+                     </View>
 
-              <View style={styles.buttonRowView}>
-                <View style={styles.buttonItem}>
-                  <Button onPress={this.useRankCoinFunc}
-                    mode={"contained"} color={chroma('aqua').hex()} 
-                    labelStyle={{fontSize: 20, fontFamily: "Edo"}}
-                  >
-                    Confirm
-                  </Button>
-                </View>
-
-                <View style={styles.buttonItem}>
-                  <Button mode={"contained"}
-                    onPress={() => this.setState({showRankCoinConf: false})}
-                    color={chroma('aqua').hex()}
-                    labelStyle={{fontSize: 20, fontFamily: "Edo"}}>
-                      Cancel
-                  </Button>
-                </View>
-              </View>
+                   </>
+                 :
+                  <> */}
+                    <View style={{flex:1}}>
+                      <Text style={styles.text}>You Are About To Use A Rank Coin. Proceed?</Text>
+                    </View>
+      
+                    <View style={styles.buttonRowView}>
+                      <View style={styles.buttonItem}>
+                        <Button onPress={this.useRankCoinFunc}
+                          mode={"contained"} color={chroma('aqua').hex()} 
+                          labelStyle={{fontSize: 20, fontFamily: "Edo"}}
+                        >
+                          Confirm
+                        </Button>
+                      </View>
+      
+                      <View style={styles.buttonItem}>
+                        <Button mode={"contained"}
+                          onPress={() => this.setState({showRankCoinConf: false})}
+                          color={chroma('aqua').hex()}
+                          labelStyle={{fontSize: 20, fontFamily: "Edo"}}>
+                            Cancel
+                        </Button>
+                      </View>
+                    </View>
+                   {/* </>
+              } */}
             </View>
           </View>
         </Modal>
