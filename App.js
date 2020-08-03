@@ -101,7 +101,7 @@ export default class App extends Component{
     this.setState({isAuthenticationReady: true, authUser: user});
   }
 
-  componentDidMount(){
+  async componentDidMount(){
     SplashScreen.preventAutoHideAsync();
     firebase.auth().onAuthStateChanged(this.onAuthStateChanged);
   }

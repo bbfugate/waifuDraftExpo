@@ -49,7 +49,7 @@ class CharThumbNail extends Component {
       isSubmitted,
     }
 
-    this.submitWaifu = this.submitWaifu.bind(this)
+    // this.submitWaifu = this.submitWaifu.bind(this)
   }
 
   componentDidMount(){
@@ -131,10 +131,10 @@ class CharThumbNail extends Component {
       userInfo: props.userInfo, popRank, husbando, rankColor })
   }
   
-  submitWaifu(){
-    var char = _.cloneDeep(this.state.char)
-    submitWaifu(char)
-  }
+  // submitWaifu(){
+  //   var char = _.cloneDeep(this.state.char)
+  //   submitWaifu(char)
+  // }
   
   render(){
     var isFav = this.state.userInfo.wishList.includes(this.state.char.link);
@@ -148,7 +148,7 @@ class CharThumbNail extends Component {
             <TouchableOpacity
               activeOpacity={.25}
               onPress={() => this.selectCharacter(this.state.char)}
-              delayLongPress={100}
+              delayLongPress={500}
               onLongPress={() => this.setState({openMenu: true})}
               style={[styles.itemContainer]}
             >
@@ -188,12 +188,12 @@ class CharThumbNail extends Component {
         >
           <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={() => toggleWishListWaifu(this.state.char.link).then(() => setOpenMenu(false))} title={isFav ? "Remove Favorite" : "Add Favorite"} />
 
-          {
+          {/* {
             this.state.userInfo.submitSlots > 0  && !this.state.isSubmitted ?
               <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={() => this.submitWaifu()}
                 title={"Submit"} />
             :<></>
-          }
+          } */}
         </Menu>
       </View>
     )

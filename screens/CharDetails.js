@@ -137,6 +137,12 @@ export default class CharDetails extends Component {
     if(waifu.type != 'Anime-Manga')
       displayName = `${waifu.name} ${waifu.currentAlias != "" && waifu.currentAlias != waifu.name && !waifu.name.includes(waifu.currentAlias) ? "- " + waifu.currentAlias : ""}`
 
+    var canPointRank = false;
+    if(waifu.rank < 4){
+      var baseStats = getBaseStats(waifu.rank + 1)
+      canPointRank = waifu.attack >= baseStats.attack && waifu.defense >= baseStats.defense;
+    }
+
     return (
       <View style={[styles.container]}>
         <ImageBackground blurRadius={1} style={[styles.imageContainer]} imageStyle={{resizeMode:"cover"}} source={{uri: waifu.img}}>
@@ -214,7 +220,6 @@ export default class CharDetails extends Component {
         {/* Rank Modal */}
         <Modal
           animationType="slide"
-          // transparent={true}
           visible={this.state.showRankCoinConf}
           onRequestClose={() => this.setState({showRankCoinConf: false})}
         >

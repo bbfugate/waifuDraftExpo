@@ -157,6 +157,7 @@ export default class OtherUserProfile extends Component {
   render(){
     var waifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.otherUser.waifus.includes(x.waifuId));
     var waifuGroups = _.chain(waifus)
+    .orderBy((o) => (o.attack + o.defense), ['desc'])
     .groupBy(waifu => Number(waifu.rank))
     .map((waifus, rank) => ({ rank: Number(rank), waifus }))
     .orderBy(group => Number(group.rank), ['desc'])
@@ -186,10 +187,10 @@ export default class OtherUserProfile extends Component {
                   </View>
                   
                   <View style={[styles.userStatsView]}>
-                    <Text style={[styles.text]}>Points - {this.state.otherUser.points}</Text>
+                    {/* <Text style={[styles.text]}>Points - {this.state.otherUser.points}</Text> */}
                     <Text style={[styles.text]}>Rank Coins - {this.state.otherUser.rankCoins}</Text>
                     <Text style={[styles.text]}>Stat Coins - {this.state.otherUser.statCoins}</Text>
-                    <Text style={[styles.text]}>Submit Slots - {this.state.otherUser.submitSlots}</Text>
+                    {/* <Text style={[styles.text]}>Submit Slots - {this.state.otherUser.submitSlots}</Text> */}
                   </View>
                 </View>
               

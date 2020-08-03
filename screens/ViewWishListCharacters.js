@@ -114,12 +114,12 @@ function CharThumbNail(props){
       >
         <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={() => toggleWishListWaifu(char.link)} title={isFav ? "Remove From WishList" : "Add To WishList"} />
 
-        {
+        {/* {
           userInfo.submitSlots > 0  && !isSubmitted ?
             <Menu.Item titleStyle={{fontFamily:"Edo"}} onPress={() => submitWaifu(char)}
               title={"Submit"} />
           :<></>
-        }
+        } */}
       </Menu>
     </View>
   )

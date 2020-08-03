@@ -120,8 +120,9 @@ export default class ViewTrade extends Component {
 
     const fromWaifus = trade.from.waifus ?? [];
     const toWaifus = trade.to.waifus ?? [];
-		if(trade.from.points <= this.state.fromUser.points && trade.from.submitSlots <= this.state.fromUser.submitSlots &&
-			trade.to.points <= this.state.toUser.points && trade.to.submitSlots <= this.state.toUser.submitSlots){
+    if(trade.from.points <= this.state.fromUser.points && trade.to.points <= this.state.toUser.points &&
+      trade.from.statCoins <= this.state.fromUser.statCoins && trade.to.statCoins <= this.state.toUser.statCoins &&
+      trade.from.rankCoins <= this.state.fromUser.rankCoins && trade.to.rankCoins <= this.state.toUser.rankCoins){
 				var tt = _.difference(fromWaifus.map(x => x.waifuId), this.state.fromUser.waifus.map(x => x.waifuId)).length;
 				var te = _.difference(toWaifus.map(x => x.waifuId), this.state.toUser.waifus.map(x => x.waifuId)).length;
 				canAccept = tt == 0 && te == 0;
@@ -141,8 +142,7 @@ export default class ViewTrade extends Component {
                   
                   {/* Points Section */}
                   {
-                    this.state.trade.from.points > 0 || this.state.trade.from.submitSlots > 0 ||
-                      this.state.trade.from.rankCoins > 0 || this.state.trade.from.statCoins > 0 ?
+                    this.state.trade.from.points > 0 || this.state.trade.from.rankCoins > 0 || this.state.trade.from.statCoins > 0 ?
                       <View style={styles.pointsView}>
 
                         {this.state.trade.from.points > 0 ?
@@ -151,12 +151,12 @@ export default class ViewTrade extends Component {
                             <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.from.points}</Text>
                           </View>
                         :<></>}
-                        {this.state.trade.from.submitSlots > 0 ?
+                        {/* {this.state.trade.from.submitSlots > 0 ?
                           <View style={styles.pointsReviewRow}>
                             <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={submitSlotsIcon} />
                             <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.from.submitSlots}</Text>
                           </View>
-                        :<></>}
+                        :<></>} */}
                         {this.state.trade.from.rankCoins > 0 ?
                           <View style={styles.pointsReviewRow}>
                             <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />
@@ -235,8 +235,7 @@ export default class ViewTrade extends Component {
                   
                   {/* Points Section */}
                   {
-                    this.state.trade.to.points > 0 || this.state.trade.to.submitSlots > 0 ||
-                      this.state.trade.to.rankCoins > 0 || this.state.trade.to.statCoins > 0 ?
+                    this.state.trade.to.points > 0 || this.state.trade.to.rankCoins > 0 || this.state.trade.to.statCoins > 0 ?
                       <View style={styles.pointsView}>
                         <View style={{flex: 1}}/>
 
@@ -246,12 +245,12 @@ export default class ViewTrade extends Component {
                             <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.to.points}</Text>
                           </View>
                         :<></>}
-                        {this.state.trade.to.submitSlots > 0 ?
+                        {/* {this.state.trade.to.submitSlots > 0 ?
                           <View style={styles.pointsReviewRow}>
                             <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={submitSlotsIcon} />
                             <Text style={[ styles.statsText, {color: chroma("white")}]}>{this.state.trade.to.submitSlots}</Text>
                           </View>
-                        :<></>}
+                        :<></>} */}
                         {this.state.trade.to.rankCoins > 0 ?
                           <View style={styles.pointsReviewRow}>
                             <Image style={[styles.statImg, {tintColor: chroma("white")}]} source={rankCoinIcon} />

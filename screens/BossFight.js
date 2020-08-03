@@ -22,6 +22,8 @@ import bossFightGif from '../assets/images/Boss-Fight.gif'
 import bossFightVSBgGif from '../assets/images/Boss-Fight-VS-BG.gif'
 import bossFightVSEffectGif from '../assets/images/Boss-Fight-VS-Effect.gif'
 
+import waifuResting from '../assets/images/WaifuResting.gif'
+
 //Redux
 import store from '../redux/store';
 import watch from 'redux-watch';
@@ -106,7 +108,7 @@ export default class BossFight extends Component {
   checkBossReq(waifu){
     var boss = _.cloneDeep(this.state.boss);
 
-    var canFight = true;
+    var canFight = false;
     var messages = null;
 
     boss.requirements.forEach(req => {
@@ -116,10 +118,10 @@ export default class BossFight extends Component {
             Object.keys(req[type]).forEach(x => {
               switch(x){
                 case "equal":
-                  if(req[type][x] == waifu.rank)
+                  if(req[type][x] = waifu.rank)
                     canFight = true;
                   else{
-                    messages = { type: "Warning", message: "Waifu Rank Must Be " +req[type][x]  + " To Fight Boss" }
+                    messages = { type: "Warning", message: "Waifu Rank Must Be " + req[type][x]  + " To Fight Boss" }
                   }
                   break;
                 case "min":
@@ -150,6 +152,7 @@ export default class BossFight extends Component {
       })
     })
 
+    canFight = messages == null;
     return {canFight, messages};
   }
 
@@ -261,14 +264,43 @@ export default class BossFight extends Component {
   };
 
   render(){
-    var waifus = _.cloneDeep(this.state.waifuList).filter(x => this.state.waifus.includes(x.waifuId));
-    var waifuGroups = _.chain(waifus)
-    .groupBy(waifu => Number(waifu.rank))
-    .map((waifus, rank) => ({ rank: Number(rank), waifus }))
-    .orderBy(group => Number(group.rank), ['desc'])
-    .value()
+    var waifus = _.cloneDeep(this.state.waifuList)
+    .filter(x => this.state.waifus.includes(x.waifuId))
+    .map(waifu => {
+      var isResting = false
+      var canFight = false;
+      
+      var userFights = this.state.bosses.flatMap(x => x.fights).filter(x => x.husbandoId == this.state.userInfo.userId)
+      if(userFights.length > 0){ //has fought a boss check if this waifu has already been used
+        userFights = userFights.flatMap(x => x.waifusUsed)
+        isResting = userFights.includes(waifu.waifuId)
+      }
 
-    waifus = waifuGroups.flatMap(x => x.waifus)
+      if(!isResting){
+        var valid = this.checkBossReq(waifu);
+        canFight = valid.canFight
+      }
+
+      waifu.isResting = isResting
+      waifu.canFight = canFight
+      return waifu;
+    });
+
+    var useableWaifus = _.cloneDeep(waifus).filter(x => x.canFight)
+    var unusableWaifus = _.cloneDeep(waifus).filter(x => !x.canFight);
+    waifus = [];
+
+    [useableWaifus, unusableWaifus].forEach(x => {
+      var waifuGroups = _.chain(x)
+      .orderBy((o) => (o.attack + o.defense), ['desc'])
+      .groupBy(waifu => Number(waifu.rank))
+      .map((waifus, rank) => ({ rank: Number(rank), waifus }))
+      .orderBy(group => Number(group.rank), ['desc'])
+      .value()
+  
+      waifus = waifus.concat(waifuGroups.flatMap(y => y.waifus))
+    })
+
 
     var bgColor = "#ff0000";
     switch(this.state.boss.tier){
@@ -324,30 +356,53 @@ export default class BossFight extends Component {
                   }
 
                   return(
-                    <TouchableOpacity activeOpacity={.25} onPress={() => this.selectWaifu(item)} style={styles.itemContainer}>
-                      <View style={styles.statView}>
-                        <View style={styles.statRow}>
-                          <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={atkIcon} />
-                          <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
+                    <TouchableOpacity activeOpacity={.25} onPress={() => this.selectWaifu(item)} style={[styles.itemContainer]}>
+                      {
+                        item.isResting ?
+                          <>
+                            <Image
+                              style={{
+                                height: 50,
+                                width: 50,
+                                position: "absolute",
+                                zIndex: 10,
+                                top: 0,
+                                right: 0
+                              }}
+                              source={waifuResting}
+                            />
+                          </>
+                        : <></>
+                      }
+
+                      <View style={{height: '100%', width: '100%', opacity: item.canFight ? 1 : .5}}>
+                        <View style={styles.statView}>
+                          <View style={styles.statRow}>
+                            <Image style={[styles.statImg, {tintColor: chroma(rankColor).brighten()}]} source={atkIcon} />
+                            <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.attack}</Text>
+                          </View>
+                          <View style={styles.statRow}>
+                            <Image style={[styles.statImg, {tintColor: chroma(rankColor).brighten()}]} source={defIcon} />
+                            <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
+                          </View>
                         </View>
-                        <View style={styles.statRow}>
-                          <Image style={[styles.statImg, {tintColor: chroma(rankColor)}]} source={defIcon} />
-                          <Text style={[ styles.statsText, {color: chroma(rankColor).brighten()}]}>{item.defense}</Text>
+
+                        <Image
+                          style={{
+                            flex: 1,
+                            aspectRatio: 1,
+                            resizeMode: "cover",
+                            borderRadius: 10,
+                            ...StyleSheet.absoluteFillObject,
+                            
+                          }}
+                          source={{uri: item.img}}
+                        />
+
+                        <View style={{position: "absolute", bottom: 0, width:'100%', height:'auto'}}>
+                          <RankBackground rank={item.rank} name={item.name} />
                         </View>
                       </View>
-
-                      <Image
-                        style={{
-                          flex: 1,
-                          aspectRatio: 1,
-                          resizeMode: "cover",
-                          borderRadius: 10,
-                          ...StyleSheet.absoluteFillObject,
-                          
-                        }}
-                        source={{uri: item.img}}
-                      />
-                      <RankBackground rank={item.rank} name={item.name} />
                     </TouchableOpacity>
                   )
                 }}
