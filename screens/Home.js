@@ -33,8 +33,10 @@ class CarouselItem extends PureComponent{
     this.state = {
       item: props.item,
       pollType: props.pollType,
+      dailyActive: props.dailyActive,
       parallaxProps: props.parallaxProps,
-      onPressCarousel: props._onPressCarousel
+      onPressCarousel: props._onPressCarousel,
+			userInfo: store.getState().user.credentials
     }
   }
 
@@ -42,8 +44,10 @@ class CarouselItem extends PureComponent{
     this.setState({
       item: props.item,
       pollType: props.pollType,
+      dailyActive: props.dailyActive,
       parallaxProps: props.parallaxProps,
-      onPressCarousel: props._onPressCarousel
+      onPressCarousel: props._onPressCarousel,
+			userInfo: store.getState().user.credentials
     })
 	}
 
@@ -51,30 +55,40 @@ class CarouselItem extends PureComponent{
     var rank = 1;
     var progress = 0;
     var rankColor = "#ff0000";
+    var userVote = this.state.item.votes.filter(x => x.husbandoId == this.state.userInfo.userId);
+
     if(this.state.pollType == "Weekly"){
-      if (this.state.item.totalVoteCount < 50){
-        rank = 1
-        rankColor = "#ff0000"
-        progress = this.state.item.totalVoteCount/50
+      if (this.state.item.topVote.vote < 50){
+        progress = this.state.item.topVote.vote/50
       }
-      else if(this.state.item.totalVoteCount < 100){
+      else if(this.state.item.topVote.vote < 75){
         rank = 2
         rankColor = "#835220"
-        progress = this.state.item.totalVoteCount/100
+        progress = this.state.item.topVote.vote/75
       }
-      else if(this.state.item.totalVoteCount < 200){
+      else if(this.state.item.topVote.vote < 100){
         rank = 3
         rankColor = "#7b7979"
-        progress = this.state.item.totalVoteCount/200
+        progress = this.state.item.topVote.vote/100
       }
       else{
         rankColor = "#b29600"
         rank = 4
       }
     }
+    else{
+      var progVote = !this.state.dailyActive ? this.state.item.topVote.vote : !_.isEmpty(userVote) ? userVote[0].vote : 0;
+      if (progVote < 25){
+        progress = progVote/25
+      }
+      else{
+        rank = 2
+        rankColor = "#835220"
+      }
+    }
 
     return(
-      <TouchableOpacity onPress={() => this.state.onPressCarousel(this.state.item.waifuId)} style={styles.item}>
+      <TouchableOpacity onPress={() => this.state.onPressCarousel(this.state.item.waifuId, this.state.item.topVote)} style={styles.item}>
         <ParallaxImage
           source={{ uri: this.state.item.img }}
           containerStyle={styles.imageContainer}
@@ -94,17 +108,17 @@ class CarouselItem extends PureComponent{
         
         <View style={{flex:1}}>
           <View style={{flex: 1}}>
-            <View style={styles.topVoteContainer}>
-              <Image style={styles.topVote} source={TopVote} />
-              <View style={styles.topVoteImg}>
-                <Image source={{uri: this.state.item.topVote.img}}  resizeMode='cover' style={styles.topVoteImg} />
-              </View>
-              <Text style={styles.topVoteCount}>{this.state.item.topVote.vote}</Text>
-
-              {
-                this.state.pollType != "Weekly" ?
-                  <></>
-                : 
+            {
+              this.state.pollType == "Weekly" || !this.state.dailyActive ?
+                <>
+                  <View style={styles.topVoteContainer}>
+                    <Image style={styles.topVote} source={TopVote} />
+                    <View style={styles.topVoteImg}>
+                      <Image source={{uri: this.state.item.topVote.img}}  resizeMode='cover' style={styles.topVoteImg} />
+                    </View>
+                    <Text style={styles.topVoteCount}>{this.state.item.topVote.vote}</Text>
+                  </View>
+                  
                   <View
                     style={{
                       flexDirection:"row",
@@ -114,7 +128,7 @@ class CarouselItem extends PureComponent{
                     }}
                   >
                     <View style={{width: 75}}>
-                      <Text style={[styles.totalVoteCount, {color: chroma(rankColor).brighten(1.5)}]}>{this.state.item.totalVoteCount}</Text>
+                      <Text style={[styles.totalVoteCount, {color: chroma(rankColor).brighten(1.5)}]}>{this.state.item.topVote.vote}</Text>
                     </View>
 
                     <View style={{flex:1}}>
@@ -123,23 +137,55 @@ class CarouselItem extends PureComponent{
                       </View>
                     </View>
                   </View>
-              }
-            </View>
+                </>
+              : 
+                this.state.pollType == "Daily" && !_.isEmpty(userVote) ? 
+                  <>
+                    <View style={styles.topVoteContainer}>
+                      <Image style={styles.topVote} source={TopVote} />
+                      <View style={styles.topVoteImg}>
+                        <Image source={{uri: userVote[0].img}}  resizeMode='cover' style={styles.topVoteImg} />
+                      </View>
+                      <Text style={styles.topVoteCount}>{userVote[0].vote}</Text>
+                    </View>
+                    
+                    <View
+                      style={{
+                        flexDirection:"row",
+                        width: '100%', height: 30, position:"absolute",
+                        alignSelf: "center", alignItems:"center", justifyContent: "center",
+                        bottom:0, zIndex:10, backgroundColor: chroma('black').alpha(.75)
+                      }}
+                    >
+                      <View style={{width: 75}}>
+                        <Text style={[styles.totalVoteCount, {color: chroma(rankColor).brighten(1.5)}]}>{userVote[0].vote}</Text>
+                      </View>
+
+                      <View style={{flex:1}}>
+                        <View style={{width: '90%'}}>
+                          <ProgressBar progress={progress} color={chroma(rankColor).brighten(1.5).hex()} />
+                        </View>
+                      </View>
+                    </View>
+                  </>
+                : 
+                  <></>
+            }
+
+            {
+              this.state.pollType == "Weekly" ?
+                <View style={[styles.weeklyCountDown], {...StyleSheet.absoluteFill, position:"absolute", zIndex: 10}}>
+                  <Countdown activeTill={this.state.item.leaveDate.toDate()} type={"WEEKLY"} />
+                </View>
+              : <></>
+            }
           </View>
           
           <View style={styles.titleView}>
             <RankBackground width={width * 8} rank={rank} name={this.state.item.name} />
           </View>
         </View>
-        
-        {
-          this.state.item.husbandoId == "Weekly" ?
-            <View style={[styles.weeklyCountDown], {...StyleSheet.absoluteFill, position:"absolute", zIndex: 10}}>
-              <Countdown activeTill={this.state.item.leaveDate.toDate()} type={"WEEKLY"} />
-            </View>
-          : <></>
-        }
-              
+           
       </TouchableOpacity>
     );
   }
@@ -222,18 +268,18 @@ export default class Home extends Component {
     }
   };
   
-  selectWaifu(item){
+  selectWaifu(item, topVote){
     // here handle carousel press
     var waifu = [this.state.weeklyPollWaifus, this.state.dailyPollWaifus].flat().filter(x => x.waifuId == item)[0]
     var poll = this.state.weeklyPollWaifus.map(x => x.waifuId).includes(item) ? this.state.weeklyPoll : this.state.dailyPoll;
     
-    this.state.navigation.navigate("VoteDetails", {waifu, poll})
+    this.state.navigation.navigate("VoteDetails", {waifu, topVote, poll})
     this.setState({card: item})
   }
   
   _renderItem = ({item, index}, parallaxProps) => {
     return (
-      <CarouselItem item={item} parallaxProps={parallaxProps} pollType={item.husbandoId == "Weekly" ? "Weekly" : "Daily"} _onPressCarousel={this.selectWaifu}/>
+      <CarouselItem item={item} parallaxProps={parallaxProps} pollType={item.husbandoId} _onPressCarousel={this.selectWaifu}/>
     );
   }
 
@@ -259,26 +305,12 @@ export default class Home extends Component {
                 <Carousel
                   data={this.state.weeklyPollWaifus.map(x => 
                     {
-                    var topVote = {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
-                    var votes = _.orderBy(x.votes, ['vote'] ,['desc']);
-                    var totalVoteCount = votes.map(x => x.vote).reduce(function(a, b){ return a + b; }, 0)
+                      var votes = _.orderBy(x.votes, ['vote'] ,['desc']);
+                      var topVote = votes.length > 0 ? votes[0] : {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
 
-                    if(this.state.weeklyPoll == null)
-                      return {img: x.img, waifuId: x.waifuId, husbandoId: x.husbandoId, name: x.name, rank: x.rank, totalVoteCount, topVote, appearDate: x.appearDate, leaveDate: x.leaveDate }
-
-                    if(votes.length > 0){
-                      var maxVote = votes[0].vote;
-                      if(votes.filter(x => x.vote == maxVote).length > 1){
-                        //Theres A Tie
-                        topVote.vote = "TIE";
-                      }
-                      else{
-                        topVote = votes[0]
-                      }
-                    }
-
-                    return {img: x.img, waifuId: x.waifuId, husbandoId: x.husbandoId, name: x.name, rank: x.rank, totalVoteCount, topVote, appearDate: x.appearDate, leaveDate: x.leaveDate }
-                  })}
+                      return {...x, topVote, dailyActive: false}
+                    })
+                  }
                   sliderWidth={this.state.size.width}
                   itemWidth={this.state.size.width * .8}
                   renderItem={this._renderItem}
@@ -312,13 +344,9 @@ export default class Home extends Component {
                 <Carousel
                   data={
                       this.state.dailyPollWaifus.map(x => {
-                      var topVote = {vote: "?", img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
+                      var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
                       var votes = _.orderBy(x.votes, ['vote'], ['desc']);
-                      var totalVoteCount = 0
-
-                      if(this.state.dailyPoll == null)
-                        return {img: x.img, waifuId: x.waifuId, husbandoId: x.husbandoId, name: x.name, rank: x.rank, totalVoteCount, topVote }
-
+                      
                       if(this.state.dailyPoll.isActive){
                         votes = votes.filter(x => x.husbandoId == this.state.userInfo.userId);
                         if(votes.length > 0){
@@ -338,7 +366,7 @@ export default class Home extends Component {
                         }
                       }
 
-                      return {img: x.img, waifuId: x.waifuId, husbandoId: x.husbandoId, name: x.name, rank: x.rank, votes: x.votes, totalVoteCount, topVote }
+                      return {...x, topVote, dailyActive: this.state.dailyPoll.isActive}
                     })
                   }
                   sliderWidth={this.state.size.width}

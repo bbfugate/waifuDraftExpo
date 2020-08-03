@@ -54,7 +54,7 @@ export async function getSearchData(){
   store.dispatch({ type: STOP_LOADING_UI });
 }
 
-export async function useRankCoin(waifu){
+export async function useRankCoin(waifu, rankCoins, points, statCoins){
   store.dispatch({ type: LOADING_UI });
   
   var user = store.getState().user.credentials;
@@ -67,7 +67,12 @@ export async function useRankCoin(waifu){
 		return firebase.firestore().doc(`users/${user.userId}`).get()
 	})
 	.then(doc => {
-		return doc.ref.update({ rankCoins: doc.data().rankCoins - 1 });
+    var user = doc.data();
+    var newPoints = user.points - points;
+    var newRankCoins = user.rankCoins - rankCoins;
+    var newStatCoins = user.statCoins - statCoins;
+
+		return doc.ref.update({ points: newPoints, statCoins: newStatCoins, rankCoins: newRankCoins });
 	})
   .then(()=>{
     store.dispatch({
@@ -793,7 +798,7 @@ function randomNumber(min, max) {
   return Math.ceil(Math.random() * max); 
 }
 
-function getBaseStats(rank){
+export function getBaseStats(rank){
 	var stats = { rank, attack: 1, defense: 1}
 	switch (rank){
 		case 1:

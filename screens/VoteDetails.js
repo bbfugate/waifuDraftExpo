@@ -58,12 +58,12 @@ export default class VoteDetails extends Component {
     this.state = {
       isActive,
       navigation: props.navigation,
+      waifu: props.route.params.waifu,
       poll: props.route.params.poll,
       pollType: props.route.params.poll.type,
-      waifu: props.route.params.waifu,
+      topVote: props.route.params.topVote,
       userInfo: store.getState().user.credentials,
       otherUsers: store.getState().user.otherUsers,
-      topVote: {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"},
       voteCount: 0
     };
     
@@ -80,7 +80,7 @@ export default class VoteDetails extends Component {
       var newWaifu = [newVal.weeklyPollWaifus, newVal.dailyPollWaifus].flat().filter(x => x.waifuId == this.state.waifu.waifuId)[0]
       var newPoll = this.state.pollType == "weekly" ? newVal.poll.weekly : newVal.poll.daily;
 
-      var topVote = {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
+      var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
       var votes = _.orderBy(newWaifu.votes, ['vote'] ,['desc']);
       if(this.state.pollType == "daily" && newPoll.isActive){
         votes = votes.filter(x => x.husbandoId == this.state.userInfo.userId);
@@ -122,7 +122,7 @@ export default class VoteDetails extends Component {
     var updtWaifu = [store.getState().data.weeklyPollWaifus, store.getState().data.dailyPollWaifus].flat().filter(x => x.waifuId == this.state.waifu.waifuId)[0]
     var updtPoll = this.state.pollType == "weekly" ? store.getState().data.poll.weekly : store.getState().data.poll.daily;
 
-    var topVote = {vote: "None", img: "https://booking.lofoten.info/en//Content/img/missingimage.jpg"};
+    var topVote = {vote: 0, img: "https://images-na.ssl-images-amazon.com/images/I/51XYjrkAYuL._AC_SY450_.jpg"};
     var votes = _.orderBy(updtWaifu.votes, ['vote'] ,['desc']);
     if(this.state.pollType == "daily" && updtPoll.isActive){
       votes = votes.filter(x => x.husbandoId == updtUserInfo.userId);
@@ -220,22 +220,22 @@ export default class VoteDetails extends Component {
     var currVote = 0;
     var validVote = true;
     var minPoints = 1;
-    if(this.state.waifu.husbandoId == "Weekly" && 
-      !_.isEmpty(this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)) &&
-      this.state.topVote.vote != "None")
-    {
-      var voteObj = this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)[0]
-      currVote = voteObj.vote;
-
-      if(voteObj.vote < this.state.topVote.vote){
-        minPoints = this.state.topVote.vote - voteObj.vote + 1
-      }
-    }
+    var userVote = this.state.voteCount;
     
-    if(this.state.waifu.husbandoId == "Weekly")
-      validVote = (currVote + this.state.voteCount) <= this.state.topVote.vote || this.state.voteCount > this.state.userInfo.points
+    if(this.state.waifu.husbandoId == "Weekly"){
+      var voteObj = this.state.waifu.votes.filter(x => x.husbandoId == this.state.userInfo.userId)
+      currVote = !_.isEmpty(voteObj) ? voteObj[0].vote : 0;
+
+      if(this.state.topVote.vote != 0 && currVote < this.state.topVote.vote)
+      {
+        minPoints = this.state.topVote.vote - currVote + 1
+      }
+
+      userVote = minPoints > this.state.voteCount ? minPoints : this.state.voteCount;
+      validVote = (currVote + userVote) <= this.state.topVote.vote || userVote > this.state.userInfo.points
+    }
     else
-      validVote = this.state.voteCount > minPoints
+      validVote = userVote > minPoints
 
     return (
       <View style={[styles.container]}>
@@ -281,7 +281,7 @@ export default class VoteDetails extends Component {
                     this.state.isActive && this.state.userInfo.points > 0 ?
                       <View style={{height: 50, flexDirection: "row" , alignItems:"center", justifyContent:"center"}}>
                         <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
-                          <NumericInput value={this.state.voteCount} 
+                          <NumericInput value={userVote} 
                             onChange={value => this.setState({voteCount: value})}
                             rounded
                             minValue={minPoints} 
@@ -300,7 +300,7 @@ export default class VoteDetails extends Component {
                               backgroundColor: chroma('white').alpha(.5).hex(),
                               borderWidth: 1,
                               borderColor: chroma('black').alpha(.25).hex(),
-                             }}
+                            }}
                           />
                         </View>
                         <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
@@ -309,7 +309,7 @@ export default class VoteDetails extends Component {
                             mode="contained"
                             color={chroma('aqua').hex()}
                             style={{ fontFamily:"Edo", flex: .75, width: width/2.5 }}
-                            onPress={() => this.submitVote(this.state.voteCount, this.state.waifu)}
+                            onPress={() => this.submitVote(minPoints > this.state.voteCount ? minPoints : this.state.voteCount, this.state.waifu)}
                           >
                             Submit Vote
                           </Button>
